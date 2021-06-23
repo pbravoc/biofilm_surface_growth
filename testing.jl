@@ -1,7 +1,3 @@
-using Plots
+using sg_functions.jl
 
-x = Array(1:10)
-y = x .^ 2
-print(x)
-print(y)
-plot(x, y)
+sol = run_nutrients()
