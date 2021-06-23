@@ -18,3 +18,7 @@ function run_nutrients()
     sol = solve(prob,Tsit5())
     return sol 
 end
+
+function printme(x)
+    print(x)
+end
