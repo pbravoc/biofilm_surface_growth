@@ -1,6 +1,7 @@
 using ModelingToolkit, DifferentialEquations
 using Plots, ColorSchemes, Plots.PlotMeasures
 using DataFrames, StatsPlots, Arrow
+using StatsBase
 
 function nutrient_limited()
     @parameters t α β Kb Kc
@@ -19,17 +20,18 @@ function nutrient_limited()
     return sol 
 end
 
+G(x, xstar) = x < xstar ? x : xstar # if below xstar double, otherwise max speed
+@register G(x, xstar)
+
 function interface_limited()
     @parameters t α β ϵ Kc
     @variables b(t) c(t)
     D = Differential(t)
-
     u0 = [b => 0.7, c => 150.0]
     p  = [α => 1.168, β =>0.063, ϵ => 0.012,
           Kc => 140]
-    eqs = [D(b) ~ α .*(c/(Kc+c)) *G(b) - β*b,
+    eqs = [D(b) ~ α .*(c/(Kc+c)) *G(b, 20) - β*b,
           D(c) ~ -α*ϵ*b*(c/(Kc+c))]
-
     prob = ODEProblem(ODESystem(eqs),u0,tspan,p)
     sol = solve(prob,Tsit5(), saveat=0.1)
     return sol 
@@ -44,5 +46,23 @@ function experimental_heights(strain, replicate)
     return t_experiment, h_experiment
 end
 
-G(x) = x < 20 ? x : 20 # if below xstar double, otherwise max speed
-@register G(x)
+function z_histogram(tf)
+      T = length(tf.Profile)
+      img = zeros(T, length(tf.Profile[1]))
+      hchange = zeros(T-1, length(tf.Profile[1]))
+      for i=1:T-1
+      hchange[i,:] = (tf.Profile[i+1] - tf.Profile[i]) / (tf.Time[i+1] - tf.Time[i])
+      img[i,:] = tf.Profile[i]
+      end
+      img[T,:] = tf.Profile[T]
+      l, r = findall(x->!isnan(x), img[1,:])[1], findall(x->!isnan(x), img[1,:])[end]
+      x = vec(img[1:T-1, l:r])
+      y = vec(hchange[1:T-1, l:r])
+      h = StatsBase.fit(Histogram, (x, y), nbins=50)
+      return h
+end
+
+function interface_deriv(x, p)
+      if_shape(x, p) = p[2]*G.(x, p[1]) - p[3]*x
+      return if_shape(x, p)
+  end
