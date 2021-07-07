@@ -37,6 +37,7 @@ function interface_limited()
     return sol 
 end
 
+
 function experimental_heights(strain, replicate)
     df = DataFrame(Arrow.Table("/home/pablo/Biofilms/Data/radialv2.arrow"));
     tf = df[(df.Strain .== strain) .& (df.Replicate .<= replicate) , :]
