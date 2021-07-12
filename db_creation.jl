@@ -8,15 +8,26 @@ simple metrics
 """
 function add_to_database(df, dict)
     times = npzread(string(dict["folder"], "times.npy"))
-    replicate = ["A", "B", "C"]
+    replicate = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
+
+    # Main (timelapse) points
     for i=1:3
-        profile = npzread(string(dict["folder"], "profiles_",    # Open current working replicate
+        profile = npzread(string(dict["folder"], "profiles_",    
                           replicate[i],".npy"))
         for j=1:size(times)[2]
             rowdata = (dict["strain"], dict["date"], replicate[i], times[j], j,
                        dict["zoom"], dict["by"], profile[j,:])
             push!(df, rowdata)
         end
+    end
+
+    # Secondary (control) points 
+    control_times = npzread(string(dict["folder"], "times_control.npy"))
+    control_profiles = npzread(string(dict["folder"], "profiles_control.npy"))
+    for i=1:size(control_times)[1]
+        rowdata = (dict["strain"], dict["date"], replicate[i+3], times[i], i,
+        dict["zoom"], dict["by"], control_profiles[i,:])
+        push!(df, rowdata)
     end
 end
 
