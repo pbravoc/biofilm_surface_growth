@@ -15,7 +15,7 @@ function add_to_database(df, dict)
         profile = npzread(string(dict["folder"], "profiles_",    
                           replicate[i],".npy"))
         for j=1:size(times)[2]
-            rowdata = (dict["strain"], dict["date"], replicate[i], times[j], j,
+            rowdata = (dict["strain"], dict["date"], replicate[i], times[i,j], j,
                        dict["zoom"], dict["by"], profile[j,:])
             push!(df, rowdata)
         end
@@ -25,8 +25,9 @@ function add_to_database(df, dict)
     control_times = npzread(string(dict["folder"], "times_control.npy"))
     control_profiles = npzread(string(dict["folder"], "profiles_control.npy"))
     for i=1:size(control_times)[1]
-        rowdata = (dict["strain"], dict["date"], replicate[i+3], times[i], i,
-        dict["zoom"], dict["by"], control_profiles[i,:])
+        zoom = i < 4 ? 50 : 10
+        rowdata = (dict["strain"], dict["date"], replicate[i+3], control_times[i], i,
+        zoom, dict["by"], control_profiles[i,:])
         push!(df, rowdata)
     end
 end
@@ -45,3 +46,15 @@ bgt127 = Dict("folder" => "data/timelapses/2021-06-25_bgt127/",
 jt305 = Dict("folder" => "data/timelapses/2021-07-09_jt305/",
               "strain" => "JT305", "date" => "2021-07-09", 
               "zoom" => 50, "by" => "pbravo")
+
+add_to_database(df, bgt127)
+#add_to_database(df, jt305)
+
+
+# Middle_height
+df.mid_height = [df.Profile[i][Int(length(df.Profile[i])/2)] for i=1:size(df)[1]]
+
+
+
+Arrow.write("data/timelapses/profile_database.arrow", 
+            df , compress = :zstd)
