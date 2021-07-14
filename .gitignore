@@ -1,7 +1,7 @@
 # Files that used for tinkering/coding development
 tinkering*
 
-.ipynb_checkpoints/
+.ipynb_checkpoints
 temp*
 
 .gitignore
