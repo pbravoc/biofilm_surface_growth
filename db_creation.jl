@@ -1,5 +1,6 @@
 using DataFrames, NPZ 
 using Arrow
+using NaNMath
 
 """
 Takes a dictionary as input, and outputs a 
@@ -8,7 +9,7 @@ simple metrics
 """
 function add_to_database(df, dict)
     times = npzread(string(dict["folder"], "times.npy"))
-    replicate = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
+    replicate = ["A", "B", "C", "D", "E", "F", "G", "H", "I"] # Improve this
 
     # Main (timelapse) points
     for i=1:3
@@ -25,7 +26,7 @@ function add_to_database(df, dict)
     control_times = npzread(string(dict["folder"], "times_control.npy"))
     control_profiles = npzread(string(dict["folder"], "profiles_control.npy"))
     for i=1:size(control_times)[1]
-        zoom = i < 4 ? 50 : 10
+        zoom = i < 4 ? 50 : 10           # ABCDEF are 50x, GHI are 10x due to size
         rowdata = (dict["strain"], dict["date"], replicate[i+3], control_times[i], i,
         zoom, dict["by"], control_profiles[i,:])
         push!(df, rowdata)
@@ -37,6 +38,7 @@ df = DataFrame(Strain = String[], Date = String[], Replicate = String[],
                Time = Float32[], Order=Int32[], Zoom = Float32[], 
                By = String[], Profile = Array[]);
 
+# Dictionaries for each strain 
 # BGT127: Aeromonas
 bgt127 = Dict("folder" => "data/timelapses/2021-06-25_bgt127/",
               "strain" => "BGT127", "date" => "2021-06-25", 
@@ -47,14 +49,23 @@ jt305 = Dict("folder" => "data/timelapses/2021-07-09_jt305/",
               "strain" => "JT305", "date" => "2021-07-09", 
               "zoom" => 50, "by" => "pbravo")
 
+# Add metadata and profiles to database 
 add_to_database(df, bgt127)
-#add_to_database(df, jt305)
+add_to_database(df, jt305)
 
-
-# Middle_height
+# Simple calculations
 df.mid_height = [df.Profile[i][Int(length(df.Profile[i])/2)] for i=1:size(df)[1]]
+df.max_height = [NaNMath.maximum(df.Profile[i]) for i=1:size(df)[1]]
+#df.width 
+#df.volume 
+#df.std
 
 
+# Complex calculations 
+#df.Roughness 
+#df.Fractal 
+#df.Curvature
 
+# Write dataframe as an arrow file
 Arrow.write("data/timelapses/profile_database.arrow", 
             df , compress = :zstd)
