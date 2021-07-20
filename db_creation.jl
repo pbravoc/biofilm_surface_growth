@@ -31,12 +31,22 @@ function add_to_database(df, dict)
         zoom, dict["by"], control_profiles[i,:])
         push!(df, rowdata)
     end
+    print(string("Added" , dict["strain"]))
 end
 
 # Initialize an empty database
 df = DataFrame(Strain = String[], Date = String[], Replicate = String[], 
                Time = Float32[], Order=Int32[], Zoom = Float32[], 
                By = String[], Profile = Array[]);
+print("Columns created")
+
+# Add Vibrios
+Df = DataFrame(Arrow.Table("/home/pablo/Biofilms/Data/radialv2.arrow"));
+tf = select(Df, :Strain, :Date, :Replicate, :Time, :Order, :Zoom, :By, :Profile);
+for i=1:size(tf)[1]
+    push!(df, tf[i,:])
+end
+print("Added older vcholerae data")
 
 # Dictionaries for each strain 
 # BGT127: Aeromonas
@@ -56,15 +66,19 @@ add_to_database(df, jt305)
 # Simple calculations
 df.mid_height = [df.Profile[i][Int(length(df.Profile[i])/2)] for i=1:size(df)[1]]
 df.max_height = [NaNMath.maximum(df.Profile[i]) for i=1:size(df)[1]]
-#df.width 
-#df.volume 
+l = [findall(x->!isnan(x), y)[1] for y in df.Profile]
+r = [findall(x->!isnan(x), y)[end] for y in df.Profile]
+df.width = (r-l)* 0.17362 * 1e-3 * 50 ./ df.Zoom
+#df.volume  
 #df.std
-
 
 # Complex calculations 
 #df.Roughness 
 #df.Fractal 
 #df.Curvature
+
+# Remove profiles from database to make it small
+df = select(df, Not(:Profile))
 
 # Write dataframe as an arrow file
 Arrow.write("data/timelapses/profile_database.arrow", 

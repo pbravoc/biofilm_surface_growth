@@ -37,34 +37,113 @@ function interface_limited()
     return sol 
 end
 
-
-function experimental_heights(strain, replicate)
-    df = DataFrame(Arrow.Table("/home/pablo/Biofilms/Data/radialv2.arrow"));
-    tf = df[(df.Strain .== strain) .& (df.Replicate .<= replicate) , :]
-    center_ids = Int.((df.homelandL+df.homelandR)/2)
-    df.height = [df.Profile[i][center_ids[i]] for i=1:size(df)[1]]
-    t_experiment, h_experiment = tf.Time, tf.Z
-    return t_experiment, h_experiment
-end
-
-function z_histogram(tf)
-      T = length(tf.Profile)
-      img = zeros(T, length(tf.Profile[1]))
-      hchange = zeros(T-1, length(tf.Profile[1]))
-      for i=1:T-1
-      hchange[i,:] = (tf.Profile[i+1] - tf.Profile[i]) / (tf.Time[i+1] - tf.Time[i])
-      img[i,:] = tf.Profile[i]
-      end
-      img[T,:] = tf.Profile[T]
-      l, r = findall(x->!isnan(x), img[1,:])[1], findall(x->!isnan(x), img[1,:])[end]
-      x = vec(img[1:T-1, l:r])
-      y = vec(hchange[1:T-1, l:r])
-      h = StatsBase.fit(Histogram, (x, y), nbins=50)
-      return h
-end
-
 function interface_deriv(x, p)
       if_shape(x, p) = p[2]*G.(x, p[1]) - p[3]*x
       return if_shape(x, p)
   end
 
+  " Substract a polynomial of degree *deg* from the array y"
+  function subpoly(y, deg)
+      x = Array(range(1, length(y), step=1))  # temp x array for fitting
+      flat = fit(x, y, deg)                   # fitting 
+      myfit = flat.(x)                        # lower dimension
+      sub = y-myfit                           # substract 
+      return sub
+  end
+  
+  "Returns frequency and FFT of a pair of arrays *x* and *y*"
+  function fourer_decomp(x, y)
+      xs = x[2]-x[1]                          # get distance
+      F = fft(y) |> fftshift                  # get amplitudes 
+      freqs = fftfreq(length(x), 1/xs) |> fftshift    # get frequencies
+      return freqs, F
+  end
+  
+  "Returns a mirror of *v* displaced by *s*, NaNs on out of range"
+  function mirror(v, s)
+      mirr_vector = circshift(v, s)           # PBC shift the vector
+      if s>=0                                 # if change is positive
+          mirr_vector[1:s] .= NaN             # NaN beginning
+      else                                    # if its negative
+          mirr_vector[end+s+1:end] .= NaN     # NaN end
+      end
+      return mirr_vector
+  end
+  
+  """
+  Updates first *M1* and second moments *M2* of the 
+  heights array *v* across a range of distances *r*
+  """
+  function update_moments!(v, r, C, M1, M2)
+      for r_current in (r, -r)
+          vect = mirror(v, r_current)
+          idx = isnan.(vect)                  # values that are NaNs
+          C .+= .! idx                        # Only count values with data
+          vect[idx] .= 0                      # NaNs->0 to not remove data
+          M1 .+= vect                         # Update first moment
+          M2 .+= vect .^ 2                    # Update second moment
+      end
+      return C, M1, M2
+  end
+  
+  """
+  Calculates the local standard deviation of the
+  array *v* on a set of distances *R*
+  """
+  function lstd(v, R)
+      C = zeros(length(v))                    # empty counts 
+      M1 = zeros(length(v))                   # empty moment 1
+      M2 = zeros(length(v))                   # empty moment 2
+      LSD = zeros(length(R)-1)                # local standard deviation
+      for i in 1:(length(R)-1)                # loop for all the distances
+          C, M1, M2 = update_moments!(v, R[i+1], C, M1, M2)   # update
+          ex1 = M1 ./ C                       # Real moment 1 by normalizing
+          ex2 = M2 ./ C                       # Real moment 2 by normalizing
+          inside = ex2 .- (ex1 .^ 2)          # to make other operation shorter
+          LSD[i] = NaNMath.mean(sqrt.(abs.(inside))) # standard deviation
+      end                                     # abs solves negative zeroes from comp
+      return LSD
+  end
+  
+  """
+  Box-counting algorithm for the array *y*, with a spatial
+  resolution *R* and at sizes *S*
+  """
+  function get_counts(y,rx, S)
+      x = Array(1:length(y))
+      R = [1, rx]   # Resolution
+      M = [length(y), NaNMath.maximum(y)]  # Maximums
+      m = [0, NaNMath.minimum(y)]          # Minimums
+      rs = [R*s for s in S]
+      bn = Array(reduce(hcat, [Int.((M-m) .÷ r) for r in rs])')
+      bn[bn .== 0] .= 1
+      bs = Array(reduce(hcat, [(M-m)./bn[i,:] for i in 1:size(bn)[1]])')
+      counts = zeros(length(S))
+      for i in 1:length(S)
+          c = bn[i,2]
+          C = Int.(c*(x .÷ bs[i,1]) + (y .÷ bs[i,2]))
+          idx = .! isnan.(C)
+          counts[i] = length(unique(C[idx]))
+      end
+  return counts
+  end
+  
+  @. pline(x,p) = p[1] + p[2] * x
+  function plinefit(x,y)
+      myfit = curve_fit(pline, x, y, [1.0, 1.0])
+      return myfit.param
+  end
+  
+  function log_weights(x)
+      xarray = log10.(x)
+      xstart, xend = xarray[1:end-1], xarray[2:end]
+      xdif = xend-xstart
+      return push!(xdif, xdif[end])
+  end
+  
+  function fit_rough(x, y)
+      x, y = log10.(x)[8:400], log10.(y)[8:400]
+      we = log_weights(x)
+      we = we./sum(we)
+      return curve_fit(pline, x, y, we, [-3.0, 1.0]).param[2]
+  end
