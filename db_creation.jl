@@ -68,4 +68,5 @@ df.max_height = [NaNMath.maximum(df.Profile[i]) for i=1:size(df)[1]]
 
 # Write dataframe as an arrow file
 Arrow.write("data/timelapses/profile_database.arrow", 
-            df , compress = :zstd)
+            df, compress = :zstd)
+print("success!")
