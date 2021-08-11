@@ -1,6 +1,7 @@
 using DataFrames, NPZ 
 using Arrow
 using NaNMath
+using JLD2
 
 """
 Takes a dictionary as input, and outputs a 
@@ -63,8 +64,13 @@ jt305 = Dict("folder" => "data/timelapses/2021-07-09_jt305/",
 add_to_database(df, bgt127)
 add_to_database(df, jt305)
 
+# Change infinites for NaNs 
+for x in df.Profile
+    x[isinf.(x)] .= NaN 
+end
+
 # Simple calculations
-df.mid_height = [df.Profile[i][Int(length(df.Profile[i])/2)] for i=1:size(df)[1]]
+df.mid_height = [df.Profile[i][Int(floor(length(df.Profile[i])/2))] for i=1:size(df)[1]]
 df.max_height = [NaNMath.maximum(df.Profile[i]) for i=1:size(df)[1]]
 l = [findall(x->!isnan(x), y)[1] for y in df.Profile]
 r = [findall(x->!isnan(x), y)[end] for y in df.Profile]
@@ -78,9 +84,11 @@ df.width = (r-l)* 0.17362 * 1e-3 * 50 ./ df.Zoom
 #df.Curvature
 
 # Remove profiles from database to make it small
-df = select(df, Not(:Profile))
+#df = select(df, Not(:Profile))
 
 # Write dataframe as an arrow file
-Arrow.write("data/timelapses/profile_database.arrow", 
-            df, compress = :zstd)
+jldsave("data/timelapses/profile_database.jld2"; df)
+
+#Arrow.write("data/timelapses/profile_database.arrow", 
+#            df)#, compress = :zstd)
 print("success!")
