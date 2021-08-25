@@ -1,5 +1,5 @@
 using DifferentialEquations, DiffEqParamEstim
-using Optim
+using Optim, Statistics
 using Plots
 using DataFrames, Arrow
 
