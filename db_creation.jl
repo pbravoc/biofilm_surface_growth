@@ -1,7 +1,5 @@
-using DataFrames, NPZ 
-using Arrow
-using NaNMath
-using JLD2
+using DataFrames, NPZ, Arrow, JLD2
+using Statistics, NaNMath
 
 """
 Takes a dictionary as input, and outputs a 
@@ -32,14 +30,14 @@ function add_to_database(df, dict)
         zoom, dict["by"], control_profiles[i,:])
         push!(df, rowdata)
     end
-    print(string("Added" , dict["strain"]))
+    println(string("Added" , dict["strain"]))
 end
 
 # Initialize an empty database
 df = DataFrame(Strain = String[], Date = String[], Replicate = String[], 
                Time = Float32[], Order=Int32[], Zoom = Float32[], 
                By = String[], Profile = Array[]);
-print("Columns created")
+println("Columns created")
 
 # Add Vibrios
 Df = DataFrame(Arrow.Table("/home/pablo/Biofilms/Data/radialv2.arrow"));
@@ -47,7 +45,7 @@ tf = select(Df, :Strain, :Date, :Replicate, :Time, :Order, :Zoom, :By, :Profile)
 for i=1:size(tf)[1]
     push!(df, tf[i,:])
 end
-print("Added older vcholerae data")
+println("Added older vcholerae data")
 
 # Dictionaries for each strain 
 # BGT127: Aeromonas
@@ -75,6 +73,12 @@ df.max_height = [NaNMath.maximum(df.Profile[i]) for i=1:size(df)[1]]
 l = [findall(x->!isnan(x), y)[1] for y in df.Profile]
 r = [findall(x->!isnan(x), y)[end] for y in df.Profile]
 df.width = (r-l)* 0.17362 * 1e-3 * 50 ./ df.Zoom
+
+h = 2e3 ./ (0.17362 * 50 ./ df.Zoom)
+df.hL = Int.(floor.(length.(df.Profile)/2 .- h./2))
+df.hR = Int.(floor.(length.(df.Profile)/2 .+ h./2))
+df.avg_height = [mean(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
+df.std_height = [std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
 #df.volume  
 #df.std
 
@@ -91,4 +95,4 @@ jldsave("data/timelapses/profile_database.jld2"; df)
 
 #Arrow.write("data/timelapses/profile_database.arrow", 
 #            df)#, compress = :zstd)
-print("success!")
+println("success!")
