@@ -6,29 +6,49 @@ Takes a dictionary as input, and outputs a
 DataFrame containing profiles and some
 simple metrics
 """
-function add_to_database(df, dict)
+function add_to_database(df, dict, long)
     times = npzread(string(dict["folder"], "times.npy"))
     replicate = ["A", "B", "C", "D", "E", "F", "G", "H", "I"] # Improve this
-
+    repl_long = ["A", "B", "C", "D", "D", "E", "E", "F", "F", "G", "G", "H", "H", "I", "I", "J", "K", "L"]
     # Main (timelapse) points
     for i=1:3
         profile = npzread(string(dict["folder"], "profiles_",    
                           replicate[i],".npy"))
-        for j=1:size(times)[2]
-            rowdata = (dict["strain"], dict["date"], replicate[i], times[i,j], j,
-                       dict["zoom"], dict["by"], profile[j,:])
-            push!(df, rowdata)
+        if long 
+            for j=1:(size(times)[2]-1)
+                rowdata = (dict["strain"], dict["date"], replicate[i], times[i,j], j,
+                        dict["zoom"], dict["by"], profile[j,:])
+                push!(df, rowdata)
+            end 
+        else 
+            for j=1:(size(times)[2])
+                rowdata = (dict["strain"], dict["date"], replicate[i], times[i,j], j,
+                        dict["zoom"], dict["by"], profile[j,:])
+                push!(df, rowdata)
+            end 
         end
     end
 
     # Secondary (control) points 
     control_times = npzread(string(dict["folder"], "times_control.npy"))
     control_profiles = npzread(string(dict["folder"], "profiles_control.npy"))
-    for i=1:size(control_times)[1]
-        zoom = i < 4 ? 50 : 10           # ABCDEF are 50x, GHI are 10x due to size
-        rowdata = (dict["strain"], dict["date"], replicate[i+3], control_times[i], i,
-        zoom, dict["by"], control_profiles[i,:])
-        push!(df, rowdata)
+
+    if long
+        for i=1:size(control_times)[1]
+            if i in [1,2,3,4,6,8]
+                zoom = 50
+            else 
+                zoom = 10
+            end
+            rowdata = (dict["strain"], dict["date"], repl_long[i], control_times[i], i, zoom, dict["by"], control_profiles[i,:])
+            push!(df, rowdata)
+        end
+    else 
+        for i=1:size(control_times)[1]
+            zoom = i < 4 ? 50 : 10           # ABCDEF are 50x, GHI are 10x due to size
+            rowdata = (dict["strain"], dict["date"], replicate[i+3], control_times[i], i, zoom, dict["by"], control_profiles[i,:])
+            push!(df, rowdata)
+        end
     end
     println(string("Added" , dict["strain"]))
 end
@@ -58,9 +78,15 @@ jt305 = Dict("folder" => "data/timelapses/2021-07-09_jt305/",
               "strain" => "JT305", "date" => "2021-07-09", 
               "zoom" => 50, "by" => "pbravo")
 
+# JT305-long: Ecoli
+jt305l = Dict("folder" => "data/timelapses/2021-08-27_jt305/",
+              "strain" => "JT305L", "date" => "2021-08-27", 
+              "zoom" => 50, "by" => "pbravo")
+
 # Add metadata and profiles to database 
-add_to_database(df, bgt127)
-add_to_database(df, jt305)
+add_to_database(df, bgt127, false)
+add_to_database(df, jt305, false)
+add_to_database(df, jt305l, true)
 
 # Change infinites for NaNs 
 for x in df.Profile
@@ -88,7 +114,7 @@ df.std_height = [std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
 #df.Curvature
 
 # Remove profiles from database to make it small
-#df = select(df, Not(:Profile))
+df = select(df, Not(:Profile))
 
 # Write dataframe as an arrow file
 jldsave("data/timelapses/profile_database.jld2"; df)
