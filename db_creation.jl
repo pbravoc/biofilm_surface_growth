@@ -6,12 +6,12 @@ Takes a dictionary as input, and outputs a
 DataFrame containing profiles and some
 simple metrics
 """
-function add_to_database(df, dict, long)
+function add_to_database(df, dict, n, long, cont)
     times = npzread(string(dict["folder"], "times.npy"))
     replicate = ["A", "B", "C", "D", "E", "F", "G", "H", "I"] # Improve this
     repl_long = ["A", "B", "C", "D", "D", "E", "E", "F", "F", "G", "G", "H", "H", "I", "I", "J", "K", "L"]
     # Main (timelapse) points
-    for i=1:3
+    for i=1:n
         profile = npzread(string(dict["folder"], "profiles_",    
                           replicate[i],".npy"))
         if long 
@@ -29,25 +29,27 @@ function add_to_database(df, dict, long)
         end
     end
 
-    # Secondary (control) points 
-    control_times = npzread(string(dict["folder"], "times_control.npy"))
-    control_profiles = npzread(string(dict["folder"], "profiles_control.npy"))
+    if cont
+        # Secondary (control) points 
+        control_times = npzread(string(dict["folder"], "times_control.npy"))
+        control_profiles = npzread(string(dict["folder"], "profiles_control.npy"))
 
-    if long
-        for i=1:size(control_times)[1]
-            if i in [1,2,3,4,6,8]
-                zoom = 50
-            else 
-                zoom = 10
+        if long
+            for i=1:size(control_times)[1]
+                if i in [1,2,3,4,6,8]
+                    zoom = 50
+                else 
+                    zoom = 10
+                end
+                rowdata = (dict["strain"], dict["date"], repl_long[i], control_times[i], i, zoom, dict["by"], control_profiles[i,:])
+                push!(df, rowdata)
             end
-            rowdata = (dict["strain"], dict["date"], repl_long[i], control_times[i], i, zoom, dict["by"], control_profiles[i,:])
-            push!(df, rowdata)
-        end
-    else 
-        for i=1:size(control_times)[1]
-            zoom = i < 4 ? 50 : 10           # ABCDEF are 50x, GHI are 10x due to size
-            rowdata = (dict["strain"], dict["date"], replicate[i+3], control_times[i], i, zoom, dict["by"], control_profiles[i,:])
-            push!(df, rowdata)
+        else 
+            for i=1:size(control_times)[1]
+                zoom = i < 4 ? 50 : 10           # ABCDEF are 50x, GHI are 10x due to size
+                rowdata = (dict["strain"], dict["date"], replicate[i+3], control_times[i], i, zoom, dict["by"], control_profiles[i,:])
+                push!(df, rowdata)
+            end
         end
     end
     println(string("Added" , dict["strain"]))
@@ -83,10 +85,28 @@ jt305l = Dict("folder" => "data/timelapses/2021-08-27_jt305/",
               "strain" => "JT305L", "date" => "2021-08-27", 
               "zoom" => 50, "by" => "pbravo")
 
+# Yeast (LB)
+yeast = Dict("folder" => "data/timelapses/2021-07-23_yeast/",
+              "strain" => "yeast", "date" => "2021-07-23", 
+              "zoom" => 50, "by" => "pbravo")
+
+# Bacillus
+bacillus = Dict("folder" => "data/timelapses/2021-07-30_bacillus/",
+              "strain" => "bacillus", "date" => "2021-07-30", 
+              "zoom" => 50, "by" => "pbravo")
+
+# Petite yeast
+pyeast = Dict("folder" => "data/timelapses/2021-09-03_pyeast/",
+              "strain" => "pyeast", "date" => "2021-09-03", 
+              "zoom" => 50, "by" => "pbravo")
+
 # Add metadata and profiles to database 
-add_to_database(df, bgt127, false)
-add_to_database(df, jt305, false)
-add_to_database(df, jt305l, true)
+add_to_database(df, bgt127, 3, false, true)
+add_to_database(df, jt305, 3, false, true)
+add_to_database(df, jt305l, 3, true, true)
+add_to_database(df, yeast, 3, true, false)
+add_to_database(df, bacillus, 2, true, false)
+add_to_database(df, pyeast, 3, true, false)
 
 # Change infinites for NaNs 
 for x in df.Profile
