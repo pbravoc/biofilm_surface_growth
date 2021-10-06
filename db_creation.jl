@@ -52,7 +52,8 @@ function add_to_database(df, dict, n, long, cont)
             end
         end
     end
-    println(string("Added" , dict["strain"]))
+
+    println(string("Added " , dict["strain"]))
 end
 
 # Initialize an empty database
@@ -62,7 +63,8 @@ df = DataFrame(Strain = String[], Date = String[], Replicate = String[],
 println("Columns created")
 
 # Add Vibrios
-Df = DataFrame(Arrow.Table("/home/pablo/Biofilms/Data/radialv2.arrow"));
+#Df = DataFrame(Arrow.Table("/home/pablo/Biofilms/Data/radialv2.arrow"));   # Lab pc
+Df = DataFrame(Arrow.Table("/home/pablo/Documents/radialv2.arrow"));        # Omilen
 tf = select(Df, :Strain, :Date, :Replicate, :Time, :Order, :Zoom, :By, :Profile);
 for i=1:size(tf)[1]
     push!(df, tf[i,:])
@@ -104,9 +106,9 @@ pyeast = Dict("folder" => "data/timelapses/2021-09-03_pyeast/",
 add_to_database(df, bgt127, 3, false, true)
 add_to_database(df, jt305, 3, false, true)
 add_to_database(df, jt305l, 3, true, true)
-add_to_database(df, yeast, 3, true, false)
-add_to_database(df, bacillus, 2, true, false)
-add_to_database(df, pyeast, 3, true, false)
+#add_to_database(df, yeast, 3, false, false)
+#add_to_database(df, bacillus, 2, false, false)
+#add_to_database(df, pyeast, 3, false, false)
 
 # Change infinites for NaNs 
 for x in df.Profile
@@ -123,8 +125,8 @@ df.width = (r-l)* 0.17362 * 1e-3 * 50 ./ df.Zoom
 h = 2e3 ./ (0.17362 * 50 ./ df.Zoom)
 df.hL = Int.(floor.(length.(df.Profile)/2 .- h./2))
 df.hR = Int.(floor.(length.(df.Profile)/2 .+ h./2))
-df.avg_height = [mean(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
-df.std_height = [std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
+df.avg_height = [NaNMath.mean(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
+df.std_height = [NaNMath.std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
 #df.volume  
 #df.std
 
