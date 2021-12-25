@@ -1,4 +1,4 @@
-using DataFrames, NPZ, Arrow, JLD2
+using DataFrames, NPZ, Arrow, CSV
 using Statistics, NaNMath
 
 """
@@ -73,32 +73,32 @@ println("Added older vcholerae data")
 
 # Dictionaries for each strain 
 # BGT127: Aeromonas
-bgt127 = Dict("folder" => "data/timelapses/2021-06-25_bgt127/",
+bgt127 = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-06-25_bgt127/",
               "strain" => "BGT127", "date" => "2021-06-25", 
               "zoom" => 50, "by" => "pbravo")
 
 # JT305: Ecoli
-jt305 = Dict("folder" => "data/timelapses/2021-07-09_jt305/",
+jt305 = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-07-09_jt305/",
               "strain" => "JT305", "date" => "2021-07-09", 
               "zoom" => 50, "by" => "pbravo")
 
 # JT305-long: Ecoli
-jt305l = Dict("folder" => "data/timelapses/2021-08-27_jt305/",
+jt305l = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-08-27_jt305/",
               "strain" => "JT305L", "date" => "2021-08-27", 
               "zoom" => 50, "by" => "pbravo")
 
 # Yeast (LB)
-yeast = Dict("folder" => "data/timelapses/2021-07-23_yeast/",
+yeast = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-07-23_yeast/",
               "strain" => "yeast", "date" => "2021-07-23", 
               "zoom" => 50, "by" => "pbravo")
 
 # Bacillus
-bacillus = Dict("folder" => "data/timelapses/2021-07-30_bacillus/",
+bacillus = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-07-30_bacillus/",
               "strain" => "bacillus", "date" => "2021-07-30", 
               "zoom" => 50, "by" => "pbravo")
 
 # Petite yeast
-pyeast = Dict("folder" => "data/timelapses/2021-09-03_pyeast/",
+pyeast = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-09-03_pyeast/",
               "strain" => "pyeast", "date" => "2021-09-03", 
               "zoom" => 50, "by" => "pbravo")
 
@@ -106,9 +106,9 @@ pyeast = Dict("folder" => "data/timelapses/2021-09-03_pyeast/",
 add_to_database(df, bgt127, 3, false, true)
 add_to_database(df, jt305, 3, false, true)
 add_to_database(df, jt305l, 3, true, true)
-#add_to_database(df, yeast, 3, false, false)
-#add_to_database(df, bacillus, 2, false, false)
-#add_to_database(df, pyeast, 3, false, false)
+add_to_database(df, yeast, 3, false, false)
+add_to_database(df, bacillus, 2, false, false)
+add_to_database(df, pyeast, 3, false, false)
 
 # Change infinites for NaNs 
 for x in df.Profile
@@ -136,11 +136,8 @@ df.std_height = [NaNMath.std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[
 #df.Curvature
 
 # Remove profiles from database to make it small
-df = select(df, Not(:Profile))
-
-# Write dataframe as an arrow file
-jldsave("data/timelapses/profile_database.jld2"; df)
-
-#Arrow.write("data/timelapses/profile_database.arrow", 
-#            df)#, compress = :zstd)
+#df = select(df, Not(:Profile))
+##
+# Write dataframe as a simple CSV
+CSV.write("biofilm_surface_growth/data/timelapses/database2.csv", df)
 println("success!")
