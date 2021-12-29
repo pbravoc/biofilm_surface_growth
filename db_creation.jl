@@ -56,6 +56,16 @@ function add_to_database(df, dict, n, long, cont)
     println(string("Added " , dict["strain"]))
 end
 
+function d_height(df)
+    h_change = zeros(size(df)[1]) 
+    h_change[end] = NaN
+    if size(df)[1] > 1
+        h_change[1:end-1] = (df.avg_height[2:end]-df.avg_height[1:end-1]) ./ 
+                            (df.Time[2:end]-df.Time[1:end-1])
+    end
+    return h_change
+end
+
 # Initialize an empty database
 df = DataFrame(Strain = String[], Date = String[], Replicate = String[], 
                Time = Float32[], Order=Int32[], Zoom = Float32[], 
@@ -135,9 +145,20 @@ df.std_height = [NaNMath.std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[
 #df.Fractal 
 #df.Curvature
 
+# Loop over individual timelapses
+#forward_change = []
+#for st in unique(df.Strain)
+#    tf = filter(row->row.Strain.==st, df);
+#    for repli in unique(tf.Replicate)
+#        rtf = filter(row->row.Replicate.==repli, tf);
+#        Δh = d_height(rtf)
+#        append!(forward_change, Δh)
+#    end
+#end
+
 # Remove profiles from database to make it small
 #df = select(df, Not(:Profile))
 ##
 # Write dataframe as a simple CSV
-CSV.write("biofilm_surface_growth/data/timelapses/database2.csv", df)
+CSV.write("biofilm_surface_growth/data/timelapses/database.csv", df)
 println("success!")
