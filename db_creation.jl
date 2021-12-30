@@ -1,5 +1,5 @@
 using DataFrames, NPZ, Arrow, CSV
-using Statistics, NaNMath
+using Statistics, NaNMath, Loess
 
 """
 Takes a dictionary as input, and outputs a 
@@ -58,8 +58,8 @@ end
 
 function d_height(df)
     h_change = zeros(size(df)[1]) 
-    h_change[end] = NaN
-    if size(df)[1] > 1
+    h_change .= NaN
+    if size(df)[1] > 2
         h_change[1:end-1] = (df.avg_height[2:end]-df.avg_height[1:end-1]) ./ 
                             (df.Time[2:end]-df.Time[1:end-1])
     end
@@ -67,18 +67,23 @@ function d_height(df)
 end
 
 function smooth_heights(df, time_window)
-    per_window = time_window / (df.Time[end]-df.Time[1])
-    model = loess(df.Time, df.avg_height, span=per_window, degree=1)
-    loess_height = [predict(model, t) for t in df.Time]
-    slope = zeros(length(df.Time))
-    dt = 0.1
-    t = df.Time[1]
-    slope[1] = (predict(model, t+dt)-predict(model,t)) / dt
-    t = df.Time[end]
-    slope[end] = (predict(model, t)-predict(model,t-dt)) / dt
-    for i=2:length(df.Time)-1
-        t = df.Time[i]
-        slope[i] = (predict(model, t+dt)-predict(model,t-dt)) / (2*dt)
+    loess_height, slope = zeros(size(df)[1]), zeros(size(df)[1])
+    loess_height .= NaN
+    slope .= NaN
+    if size(df)[1] > 2
+        per_window = time_window / (df.Time[end]-df.Time[1])
+        model = loess(df.Time, df.avg_height, span=per_window, degree=1)
+        loess_height = [predict(model, Float64(df.Time[i])) for i=1:length(df.Time)]
+        slope = zeros(length(df.Time))
+        dt = 0.1
+        t = df.Time[1]
+        slope[1] = (predict(model, Float64(t+dt))-predict(model,Float64(t))) / dt
+        t = df.Time[end]
+        slope[end] = (predict(model, Float64(t))-predict(model,Float64(t-dt))) / dt
+        for i=2:length(df.Time)-1
+            t = df.Time[i]
+            slope[i] = (predict(model, Float64(t+dt))-predict(model,Float64(t-dt))) / (2*dt)
+        end
     end
     return loess_height, slope
 end
@@ -100,32 +105,32 @@ println("Added older vcholerae data")
 
 # Dictionaries for each strain 
 # BGT127: Aeromonas
-bgt127 = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-06-25_bgt127/",
+bgt127 = Dict("folder" => "data/timelapses/2021-06-25_bgt127/",
               "strain" => "BGT127", "date" => "2021-06-25", 
               "zoom" => 50, "by" => "pbravo")
 
 # JT305: Ecoli
-jt305 = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-07-09_jt305/",
+jt305 = Dict("folder" => "data/timelapses/2021-07-09_jt305/",
               "strain" => "JT305", "date" => "2021-07-09", 
               "zoom" => 50, "by" => "pbravo")
 
 # JT305-long: Ecoli
-jt305l = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-08-27_jt305/",
+jt305l = Dict("folder" => "data/timelapses/2021-08-27_jt305/",
               "strain" => "JT305L", "date" => "2021-08-27", 
               "zoom" => 50, "by" => "pbravo")
 
 # Yeast (LB)
-yeast = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-07-23_yeast/",
+yeast = Dict("folder" => "data/timelapses/2021-07-23_yeast/",
               "strain" => "yeast", "date" => "2021-07-23", 
               "zoom" => 50, "by" => "pbravo")
 
 # Bacillus
-bacillus = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-07-30_bacillus/",
+bacillus = Dict("folder" => "data/timelapses/2021-07-30_bacillus/",
               "strain" => "bacillus", "date" => "2021-07-30", 
               "zoom" => 50, "by" => "pbravo")
 
 # Petite yeast
-pyeast = Dict("folder" => "biofilm_surface_growth/data/timelapses/2021-09-03_pyeast/",
+pyeast = Dict("folder" => "data/timelapses/2021-09-03_pyeast/",
               "strain" => "pyeast", "date" => "2021-09-03", 
               "zoom" => 50, "by" => "pbravo")
 
@@ -157,30 +162,37 @@ df.std_height = [NaNMath.std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[
 #df.volume  
 #df.std
 
+##
 # Complex calculations 
 #df.Roughness 
 #df.Fractal 
 #df.Curvature
 
 # Loop over individual timelapses
-#forward_change = []
-#loess_height = []
-#local_slope = []
-#for st in unique(df.Strain)
-#    tf = filter(row->row.Strain.==st, df);
-#    for repli in unique(tf.Replicate)
-#        rtf = filter(row->row.Replicate.==repli, tf);
-#        dh = d_height(rtf)
-#        h, s = smooth_heights(df, 4.0)
-#   append!(forward_change, Δh)
-#   append!(loess_height, h)
-#   append!(local_slope, s)    
-#   end
-#end
+forward_change = []
+loess_height = []
+local_slope = []
+for st in unique(df.Strain)
+   tf = filter(row->row.Strain.==st, df);
+   for repli in unique(tf.Replicate)
+       println(st, repli)
+       rtf = filter(row->row.Replicate.==repli, tf);
+       dh = d_height(rtf)
+       h, s = smooth_heights(rtf, 4.0)
+  append!(forward_change, dh)
+  append!(loess_height, h)
+  append!(local_slope, s)    
+  end
+end
+df.forward_change = forward_change 
+df.loess_height = loess_height
+df.local_slope = local_slope
 
 # Remove profiles from database to make it small
-#df = select(df, Not(:Profile))
-##
+df = select(df, Not(:Profile))
+
 # Write dataframe as a simple CSV
-CSV.write("biofilm_surface_growth/data/timelapses/database.csv", df)
+CSV.write("data/timelapses/database.csv", df)
 println("success!")
+
+

@@ -147,3 +147,35 @@ function interface_deriv(x, p)
       we = we./sum(we)
       return curve_fit(pline, x, y, we, [-3.0, 1.0]).param[2]
   end
+
+  function d_height(df)
+    h_change = zeros(size(df)[1]) 
+    h_change .= NaN
+    if size(df)[1] > 2
+        h_change[1:end-1] = (df.avg_height[2:end]-df.avg_height[1:end-1]) ./ 
+                            (df.Time[2:end]-df.Time[1:end-1])
+    end
+    return h_change
+end
+
+function smooth_heights(df, time_window)
+    loess_height, slope = zeros(size(df)[1]), zeros(size(df)[1])
+    loess_height .= NaN
+    slope .= NaN
+    if size(df)[1] > 2
+        per_window = time_window / (df.Time[end]-df.Time[1])
+        model = loess(df.Time, df.avg_height, span=per_window, degree=1)
+        loess_height = [predict(model, Float64(df.Time[i])) for i=1:length(df.Time)]
+        slope = zeros(length(df.Time))
+        dt = 0.1
+        t = df.Time[1]
+        slope[1] = (predict(model, Float64(t+dt))-predict(model,Float64(t))) / dt
+        t = df.Time[end]
+        slope[end] = (predict(model, Float64(t))-predict(model,Float64(t-dt))) / dt
+        for i=2:length(df.Time)-1
+            t = df.Time[i]
+            slope[i] = (predict(model, Float64(t+dt))-predict(model,Float64(t-dt))) / (2*dt)
+        end
+    end
+    return loess_height, slope
+end
