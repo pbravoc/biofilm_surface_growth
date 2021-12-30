@@ -66,6 +66,23 @@ function d_height(df)
     return h_change
 end
 
+function smooth_heights(df, time_window)
+    per_window = time_window / (df.Time[end]-df.Time[1])
+    model = loess(df.Time, df.avg_height, span=per_window, degree=1)
+    loess_height = [predict(model, t) for t in df.Time]
+    slope = zeros(length(df.Time))
+    dt = 0.1
+    t = df.Time[1]
+    slope[1] = (predict(model, t+dt)-predict(model,t)) / dt
+    t = df.Time[end]
+    slope[end] = (predict(model, t)-predict(model,t-dt)) / dt
+    for i=2:length(df.Time)-1
+        t = df.Time[i]
+        slope[i] = (predict(model, t+dt)-predict(model,t-dt)) / (2*dt)
+    end
+    return loess_height, slope
+end
+
 # Initialize an empty database
 df = DataFrame(Strain = String[], Date = String[], Replicate = String[], 
                Time = Float32[], Order=Int32[], Zoom = Float32[], 
@@ -147,13 +164,18 @@ df.std_height = [NaNMath.std(df.Profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[
 
 # Loop over individual timelapses
 #forward_change = []
+#loess_height = []
+#local_slope = []
 #for st in unique(df.Strain)
 #    tf = filter(row->row.Strain.==st, df);
 #    for repli in unique(tf.Replicate)
 #        rtf = filter(row->row.Replicate.==repli, tf);
-#        Δh = d_height(rtf)
-#        append!(forward_change, Δh)
-#    end
+#        dh = d_height(rtf)
+#        h, s = smooth_heights(df, 4.0)
+#   append!(forward_change, Δh)
+#   append!(loess_height, h)
+#   append!(local_slope, s)    
+#   end
 #end
 
 # Remove profiles from database to make it small
