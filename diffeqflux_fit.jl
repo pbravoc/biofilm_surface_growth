@@ -27,40 +27,48 @@ end
 df = DataFrame(CSV.File("data/timelapses/database.csv"))
 #df.avg_height = abs.(df.avg_height)                      # Remove negative nums
 ## Load data 
-my_strain, my_replicate = "BGT127", "C"
+my_strain, my_replicate = "BGT127", "A"
 tf =  filter(row -> row.Replicate .== my_replicate && 
              row.Strain .== my_strain, df);
 p = [1.0, 0.05, 15.0]
-mlfit = flux_fit(tf.Time, tf.avg_height, p)
-probML = ODEProblem(interface_limited, [tf.avg_height[1]], (0.0, 50.0), mlfit) # Set the problem
+#mlfit = flux_fit(tf.Time, tf.avg_height, p)
+#probML = ODEProblem(interface_limited, [tf.avg_height[1]], (0.0, 50.0), mlfit) # Set the problem
+mlfit = flux_fit(tf.Time, tf.loess_height, p)
+probML = ODEProblem(interface_limited, [tf.loess_height[1]], (0.0, 50.0), mlfit) # Set the problem
+
 solML = solve(probML, saveat=tf.Time)
 h_pred = round(mlfit[1]*mlfit[3]/mlfit[2], digits=1)
 scatter(tf.Time, tf.avg_height, label="Experimental Data", legend=:topleft, 
         grid=false, title=string(my_strain, my_replicate))
 plot!(solML, color=:black, linewidth=2, xlabel="Time (hr)", label=string("Fit, h_max =", h_pred))
-##
-my_strain, my_replicate = "JT305", "A"
-tf =  filter(row -> row.Replicate .== my_replicate && 
-             row.Strain .== my_strain, df);
-p1 = @df tf scatter(:Time, :forward_change, label="Discrete", xlabel="Time [h]", ylabel="Height [μm]")
-@df tf scatter!(:Time, :local_slope, label="Local slope")
-
-p2 = @df tf scatter(:avg_height, :forward_change, label=false, xlabel="Height [μm]", ylabel="Δ Height [μm/h]")
-@df tf scatter!(:loess_height, :local_slope, label=false)
-plot(p1, p2, layout=(2,1), size=(400, 600), dpi=300)
-savefig("figs/temp_figs/loc_slope4.svg")
 
 ##
-my_strain, my_replicate = "BGT127", "A"
-tf =  filter(row -> row.Replicate .== my_replicate && 
-             row.Strain .== my_strain, df);
-p1 = @df tf scatter(:Time, :avg_height, label="Raw", xlabel="Time [h]", ylabel="Height [μm]", alpha=0.8)
-@df tf scatter!(:Time, :loess_height, label="Smooth", alpha=0.8, legend=:topleft)
+fitr = flux_fit(tf.Time, tf.avg_height, p)
+probr = ODEProblem(interface_limited, [tf.avg_height[1]], (0.0, 50.0), fitr) # Set the problem
+solr = solve(probr, saveat=0.1)
+hr = reduce(vcat, solr.u)
+dhr = (hr[2:end]-hr[1:end-1])/0.1
+fits = flux_fit(tf.Time, tf.loess_height, p)
+probs = ODEProblem(interface_limited, [tf.loess_height[1]], (0.0, 50.0), fits) # Set the problem
+sols = solve(probr, saveat=0.1)
+hs = reduce(vcat, sols.u)
+dhs = (hs[2:end]-hs[1:end-1])/0.1
 
-my_strain, my_replicate = "JT305", "A"
-tf =  filter(row -> row.Replicate .== my_replicate && 
-             row.Strain .== my_strain, df);
-p2 = @df tf scatter(:Time, :avg_height, label="Raw", xlabel="Time [h]", ylabel="Height [μm]", alpha=0.8)
-@df tf scatter!(:Time, :loess_height, label="Smooth", alpha=0.8, legend=:topleft)
-plot(p1, p2, layout=(2,1), size=(400, 600), dpi=300)
-savefig("figs/temp_figs/loc_slope5.svg")
+##
+p1 = scatter(tf.Time, tf.forward_change, label="Experimental Data", 
+        grid=false, title=string(my_strain, my_replicate))
+scatter!(tf.Time, tf.local_slope, label="Local slope")
+plot!(solr.t[1:end-1], dhr, color=1, linewidth=2, xlabel="Time [hr]", ylabel="Height [μm]", label="Raw")
+plot!(sols.t[1:end-1], dhs, color=2, linewidth=2, label="Smooth")
+
+##
+p2 = scatter(tf.avg_height, tf.forward_change, label="Experimental Data", 
+        grid=false, title=string(my_strain, my_replicate))
+scatter!(tf.loess_height, tf.local_slope, label="Local slope")
+plot!(hr[1:end-1], dhr, color=1, linewidth=2, xlabel="Height [μm]", ylabel="Δ Height [μm/h]", label="Raw")
+plot!(hs[1:end-1], dhs, color=2, linewidth=2, label="Smooth")
+
+##
+using Plots.Measures
+plot(p1, p2, size=(900, 400), bottom_margin=3mm, left_margin=3mm, dpi=300)
+savefig("figs/new_fit.svg")
