@@ -25,7 +25,7 @@ function flux_fit(time_data, x_data, p)
 end
 
 df = DataFrame(CSV.File("data/timelapses/database.csv"))
-df.avg_height = abs.(df.avg_height)                      # Remove negative nums
+#df.avg_height = abs.(df.avg_height)                      # Remove negative nums
 ## Load data 
 my_strain, my_replicate = "BGT127", "C"
 tf =  filter(row -> row.Replicate .== my_replicate && 
@@ -39,3 +39,28 @@ scatter(tf.Time, tf.avg_height, label="Experimental Data", legend=:topleft,
         grid=false, title=string(my_strain, my_replicate))
 plot!(solML, color=:black, linewidth=2, xlabel="Time (hr)", label=string("Fit, h_max =", h_pred))
 ##
+my_strain, my_replicate = "JT305", "A"
+tf =  filter(row -> row.Replicate .== my_replicate && 
+             row.Strain .== my_strain, df);
+p1 = @df tf scatter(:Time, :forward_change, label="Discrete", xlabel="Time [h]", ylabel="Height [μm]")
+@df tf scatter!(:Time, :local_slope, label="Local slope")
+
+p2 = @df tf scatter(:avg_height, :forward_change, label=false, xlabel="Height [μm]", ylabel="Δ Height [μm/h]")
+@df tf scatter!(:loess_height, :local_slope, label=false)
+plot(p1, p2, layout=(2,1), size=(400, 600), dpi=300)
+savefig("figs/temp_figs/loc_slope4.svg")
+
+##
+my_strain, my_replicate = "BGT127", "A"
+tf =  filter(row -> row.Replicate .== my_replicate && 
+             row.Strain .== my_strain, df);
+p1 = @df tf scatter(:Time, :avg_height, label="Raw", xlabel="Time [h]", ylabel="Height [μm]", alpha=0.8)
+@df tf scatter!(:Time, :loess_height, label="Smooth", alpha=0.8, legend=:topleft)
+
+my_strain, my_replicate = "JT305", "A"
+tf =  filter(row -> row.Replicate .== my_replicate && 
+             row.Strain .== my_strain, df);
+p2 = @df tf scatter(:Time, :avg_height, label="Raw", xlabel="Time [h]", ylabel="Height [μm]", alpha=0.8)
+@df tf scatter!(:Time, :loess_height, label="Smooth", alpha=0.8, legend=:topleft)
+plot(p1, p2, layout=(2,1), size=(400, 600), dpi=300)
+savefig("figs/temp_figs/loc_slope5.svg")
