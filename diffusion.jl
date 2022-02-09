@@ -21,10 +21,11 @@ myc = c(x, dt)
 a = int_c(0.1)
 sol_dis = cumsum(c(x, dt)) .- 1
 sol_ana = int_c.(x)
-plot(x, myc, xlabel="Distance", grid=false, label="Concentration")
-plot!(x, sol_dis ./ maximum(sol_dis), label="Cumulative (sum)")
-plot!(x, sol_ana ./ maximum(sol_ana), label="Cumulative (analyitical)")
+plot(x, myc, xlabel="Distance", grid=false, label="Concentration", size=(400, 400), xlim=(0,2))
+#plot!(x, sol_dis ./ maximum(sol_dis), label="Cumulative (sum)")
+#plot!(x, sol_ana ./ maximum(sol_ana), label="Cumulative", xlim=(0,2))
 vline!([sqrt(D*dt)], color=:black, linestyle=:dash, legend=:right, label="Diffusion length")
+savefig("figs/figs_temp/infinitesource0.svg")
 
 ## Two interfaces
 function c(x, D, t)
