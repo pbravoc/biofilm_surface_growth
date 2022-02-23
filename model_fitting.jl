@@ -76,12 +76,14 @@ function d_height(s)
     end
     return h_change
 end
-my_strain, my_replicate = "bgt127", "A"
+my_strain, my_replicate = "bacillus", "B"
+Df =  DataFrame(CSV.File("data/timelapses/database_updated.csv"))
 df =  filter(row -> row.replicate .== my_replicate && 
-             row.strain .== my_strain, 
+             row.strain .== my_strain && row.time .<= 48, 
              DataFrame(CSV.File("data/timelapses/database_updated.csv")));
-@df df scatter(:time, :loess_height, label=false)
- 
+@df df scatter(:time, :avg_height, label=false, yerr=:std_height)
+@df df scatter!(:time, :loess_height, label=false, alpha=0.3, color=:black)
+
 ##
 u01, u02 = [df.loess_height[1]], [df.loess_height[1], 1.0]
 models = [nutrient_n, logistic_n, interface_n, logistic, interface]
@@ -120,7 +122,14 @@ plot()
 for i in 1:length(solutions)
     plot!(solutions[i], label=models[i], linewidth=1.5, color=colors[i], linestyle=line_style[i])
 end
-@df df scatter!(:time, :avg_height, color=:black, alpha=0.25, label=false, legend=:topleft)
-
+@df df scatter!(:time, :avg_height, color=:black, alpha=0.25, label=false, legend=:topleft, 
+                ylabel="Height [μm]", xlabel="Time [hr]")
+#savefig("figs/model_comparison.svg")
 ##
 
+@df filter(row -> row.strain .=="bgt127" && row.time .<= 48, Df) plot(:time, :avg_height, group=(:replicate), label=false, color=1, ribbon=:std_height)
+@df filter(row -> row.strain .=="jt305" && row.time .<= 48, Df) plot!(:time, :avg_height, group=(:replicate), label=false, color=2, ribbon=:std_height)
+@df filter(row -> row.strain .=="gob33" && row.time .<= 48, Df) plot!(:time, :avg_height, group=(:replicate), label=false, color=3, ribbon=:std_height)
+
+##
+@df filter(row -> row.strain .=="bgt127" && row.time .<= 48, Df) plot(:time, :avg_height, group=(:replicate), label=false, ribbon=:std_height)

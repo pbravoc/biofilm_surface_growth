@@ -154,3 +154,4 @@ plt.yticks(fontsize=14)
 plt.ylim(-2, 165)
 plt.text(0.01, 0.95, 'D', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax4.transAxes)
+#plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/figs_temp/1_updated.svg")
