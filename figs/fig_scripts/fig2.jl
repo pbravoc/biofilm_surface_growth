@@ -15,6 +15,8 @@ function int_c(h)
     return (t1 + t2 + L)
 end
 
+default(palette = [cgrad(:Dark2_3)[x] for x in [0.0, 0.05, 0.15, 0.45, 0.5, 0.55, 0.9, 0.95, 1.0]])
+default(palette = palette(:default))
 
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x->x.strain .== "bgt127" && 
@@ -32,23 +34,26 @@ sol_dis = G.(x, sqrt(D*dt))
 l = @layout [[a{0.7h}
               b{0.3h}] [c{0.7h}
                         d{0.3h}]]
-##
+
 p1 = @df df plot(:time, :avg_height, group=:replicate,
                 fillalpha=0.3, ylabel="Height [μm]", xlabel="Time [hr]",
-                legend=:topleft, alpha=1.0, marker=:circle, grid=false,
-                palette=:Spectral_4,
-                markersize=2, linewidth=2, ribbon=:std_height)
+                alpha=1.0,  grid=false, 
+                legend=:topleft,
+                marker=:circle, markersize=2, markerstrokecolor=:auto,
+                linewidth=2, ribbon=:std_height)
 @df df plot!(:time, :smooth_height, group=:replicate,
              alpha=0.8, legend=false, 
-            grid=false,
+             grid=false,
+             marker=:circle, markersize=1, markerstrokecolor=:auto,
              inset = (1, bbox(0.5, 0.45, 0.5, 0.45)),
              linewidth=1.5, subplot=2, yscale=:log10)
-##
+
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
-            fillalpha=0.3, alpha=0.8, marker=:circle,
+            fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false,
+            marker=:circle, markersize=3, markerstrokecolor=:auto,
             xlabel="Height [μm]", ylabel="Δ Height [μm/hr]",
-            markersize=3, linewidth=2)
+            linewidth=2)
 p2 = vline!([27.5], color=:black, linestyle=:dash, legend=false)
 p2 = annotate!(20, 1, text("I", 8, "courier"))
 p2 = annotate!(40, 1, text("II", 8, "courier"))
@@ -79,6 +84,3 @@ p4 = groupedbar(cube_sorted, color=1, label=false, grid=false, xticks=[1,2,3], y
 plot(p1, p3, p2, p4,layout=l, size=(700, 450), dpi=300)
 #savefig("figs/figs_temp/fig2.png")
 
-##
-elife_colors = [colorant"#90CAF9", colorant"#C5E1A5", colorant"#FFB74D",
-                colorant"#FFF176", colorant"#9E86C9", colorant"#E57373"]
