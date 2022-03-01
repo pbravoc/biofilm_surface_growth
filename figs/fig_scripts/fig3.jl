@@ -115,7 +115,7 @@ function get_average(df, strain_name)
     h_avg = reduce(vcat, mean(h, dims=2))
     h_std = reduce(vcat, std(h, dims=2))
     t = tf.time[l+1:2*l]
-    scatter!(t, h_avg, ribbon=h_std, 
+    plot!(t, h_avg, ribbon=h_std, 
              fillalpha=0.6, label=strain_name,
              markersize=3, linewidth=2)
 end
@@ -128,10 +128,20 @@ plot(xlabel="Time")
 get_average(df, "jt305")
 get_average(df, "bgt127")
 get_average(df, "gob33")
-#@df filter(x->x.strain == "jt305", df2) scatter!(:time, :avg_height, yerror=:std_height, color=1, markersize=3, label=false)
-#@df filter(x->x.strain == "bgt127", df2) scatter!(:time, :avg_height, yerror=:std_height,color=2, markersize=3,  label=false)
-#@df filter(x->x.strain == "gob33", df2) scatter!(:time, :avg_height, yerror=:std_height,color=3,  markersize=3, label=false)
+@df filter(x->x.strain == "jt305", df2) scatter!(:time, :avg_height, yerror=:std_height, color=1, markersize=3, label=false)
+@df filter(x->x.strain == "bgt127", df2) scatter!(:time, :avg_height, yerror=:std_height,color=2, markersize=3,  label=false)
+@df filter(x->x.strain == "gob33", df2) scatter!(:time, :avg_height, yerror=:std_height,color=3,  markersize=3, label=false)
 plot!(legend=:topleft, xlabel="Time [hr]", ylabel="Height [μm]")
+
+jt305_lt = DataFrame(CSV.File("data/sims/jt305_lt.csv"))
+@df jt305_lt plot!(:time, [:logistic, :interface], color=1, linestyle=[:dash :solid])
+
+bgt127_lt = DataFrame(CSV.File("data/sims/bgt127_lt.csv"))
+@df bgt127_lt plot!(:time, [:logistic, :interface], color=2, linestyle=[:dash :solid])
+
+gob33_lt = DataFrame(CSV.File("data/sims/gob33_lt.csv"))
+@df gob33_lt plot!(:time, [:logistic, :interface], color=3, linestyle=[:dash :solid])
+plot!(ylim=(0, 600))
 #savefig("figs/figs_temp/fig3_d1.svg")
 
 
