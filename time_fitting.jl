@@ -1,6 +1,6 @@
 using DataFrames, CSV
 using Statistics, NaNMath
-using Plots, StatsPlots, ColorSchemes
+using Plots, StatsPlots
 using DifferentialEquations, DiffEqFlux
 
 function get_average(df, strain_name)
@@ -21,7 +21,6 @@ function interface(du, u, p, t)
 end
 function fit_data(t_data, h_data)
     result_ode = [NaN, NaN, NaN]
-    print(length(t_data))
     try
         u0 = [0.2]
         pguess = [0.8, 0.07, 15]
@@ -34,7 +33,7 @@ function fit_data(t_data, h_data)
         end
         result_ode = DiffEqFlux.sciml_train(loss, pguess,  
                                             lower_bounds = [0.0, 0.0, 0.0], 
-                                            upper_bounds = [Inf, Inf, Inf])
+                                            upper_bounds = [1.0, 0.5, 50.0])
     catch e 
         print("poto")
     end
@@ -47,14 +46,22 @@ param_predictions = zeros(length(t), 3)
 scatter(t, h, yerror=dh)
 
 ##
+2+2
+##
 Threads.@threads for i = 10:length(t)
+    print(i)
     my_params = fit_data(t[1:i], h[1:i])
+    param_predictions[i,:] = my_params
     print(my_params)
 end
 ##
 h_eq = param_predictions[:,1] .* param_predictions[:,3] ./ param_predictions[:,2]
-plot(t, h_eq)
+scatter(h_eq[10:50])
 ##
+pf = DataFrame("time"=>t, "data"=>h, "α"=>param_predictions[:,1],
+               "β"=>param_predictions[:,2], "L"=>param_predictions[:,3])
+CSV.write("data/sims/tp_bounded.csv", pf)
 
 
-
+##
+pf 

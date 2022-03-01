@@ -81,9 +81,6 @@ plot!(ylim=(0.0, 1.0))
 function plot_slope(y, x, dt, c, l)
     smooth, slope, slope_error = smooth_heights(y, x, dt)
     plot!(y, slope, ribbon=slope_error, color=c, label=l)
-    #vline!([smooth[findmax(slope)[2]]], color=c, linestyle=:dash, label=false)
-    #hline!([maximum(slope)], color=c, linestyle=:dash, label=false)
-
 end
 
 dt = 4.0
@@ -115,7 +112,7 @@ function get_average(df, strain_name)
     h_avg = reduce(vcat, mean(h, dims=2))
     h_std = reduce(vcat, std(h, dims=2))
     t = tf.time[l+1:2*l]
-    plot!(t, h_avg, ribbon=h_std, 
+    scatter!(t, h_avg, ribbon=h_std, alpha=0.3,
              fillalpha=0.6, label=strain_name,
              markersize=3, linewidth=2)
 end
@@ -134,14 +131,23 @@ get_average(df, "gob33")
 plot!(legend=:topleft, xlabel="Time [hr]", ylabel="Height [μm]")
 
 jt305_lt = DataFrame(CSV.File("data/sims/jt305_lt.csv"))
-@df jt305_lt plot!(:time, [:logistic, :interface], color=1, linestyle=[:dash :solid])
+@df jt305_lt plot!(:time, [:logistic, :interface], color=1, linestyle=[:dash :dot], linewidth=2, label=false)
 
 bgt127_lt = DataFrame(CSV.File("data/sims/bgt127_lt.csv"))
-@df bgt127_lt plot!(:time, [:logistic, :interface], color=2, linestyle=[:dash :solid])
+@df bgt127_lt plot!(:time, [:logistic, :interface], color=2, linestyle=[:dash :dot], linewidth=2, label=false)
 
 gob33_lt = DataFrame(CSV.File("data/sims/gob33_lt.csv"))
-@df gob33_lt plot!(:time, [:logistic, :interface], color=3, linestyle=[:dash :solid])
-plot!(ylim=(0, 600))
-#savefig("figs/figs_temp/fig3_d1.svg")
+@df gob33_lt plot!(:time, [:logistic, :interface], color=3, linestyle=[:dash :dot], linewidth=2, label=false)
+plot!(ylim=(0, 800))
+
+allfit = DataFrame(CSV.File("data/sims/allpointsol.csv"))
+@df allfit plot!(:t, :jt305, color=1, linewidth=2, label=false)
+
+@df allfit plot!(:t, :bgt127, color=2, linewidth=2, label=false)
+@df allfit plot!(:t, :gob33, color=3, linewidth=2, label=false)
+plot!([-20, -21], [[-10, -4],[-10, -4],[-10, -4] ], color=:black, 
+      linestyle=[:solid :dash :dot], label=["Interface_all" "Interface_48" "Logistic_48"])
+plot!(xlim=(0, 350), dpi=400)
+savefig("figs/figs_temp/fig3_allfit.svg")
 
 
