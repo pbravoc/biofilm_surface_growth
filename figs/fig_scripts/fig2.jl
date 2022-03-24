@@ -45,7 +45,7 @@ p1 = @df df plot(:time, :avg_height, group=:replicate,
              alpha=0.8, legend=false, 
              grid=false,
              marker=:circle, markersize=1, markerstrokecolor=:auto,
-             inset = (1, bbox(0.5, 0.45, 0.5, 0.45)),
+             inset = (1, bbox(0.5, 0.45, 0.5, 0.45)), subplot=2,
              linewidth=1.5, subplot=2, yscale=:log10)
 
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
