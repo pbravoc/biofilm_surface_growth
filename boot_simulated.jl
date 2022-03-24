@@ -37,11 +37,6 @@ function fit_data(t_data, h_data)
     return result_ode
 end 
 
-Df =  DataFrame(CSV.File("data/sims/simulated_data.csv"))
-tf = filter(x-> x.S==100, Df)
-@df tf scatter(:t, :h, group=:r)
-
-##
 function boot_fit2(df, n)
     p_bootstrap = []
     while length(p_bootstrap) < n
@@ -56,10 +51,14 @@ function boot_fit2(df, n)
     end
     return reduce(hcat, p_bootstrap)'
 end
+Df =  DataFrame(CSV.File("data/sims/simulated_data.csv"))
+tf = filter(x-> x.S==100, Df)
+@df tf scatter(:t, :h, group=:r)
+
 ##
 pf = DataFrame()
 n = 128
-for s in unique(Df.S)
+for s in unique(Df.S)[61:80]
     print(s)
     tf = filter(x-> x.S==s, Df)
     pars = boot_fit2(tf, n)
@@ -68,7 +67,4 @@ for s in unique(Df.S)
     append!(pf, new_frame)
 end
 ##
-pf = DataFrame("S"=>Int64[], "id" => Int64[],
-               "α"=>Float64[], "β"=>Float64[], 
-               "L"=>Float64[])
-##
+CSV.write("data/sims/sims_bootstrap_04.csv", pf)

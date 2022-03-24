@@ -55,7 +55,7 @@ plot!(xlabel="Time [hr]", ylabel="Heigt [μm]", grid=false)
 #savefig("figs/figs_temp/fig3_a.svg")
 
 ##
-p2 = hline([0.0], color=:black, alpha=0.6, linestyle=:dash)
+p2 = @df pf plot(:time, :data - :data, color=:black, linestyle=:dash, ribbon=:data_error, fillalpha=0.2, label=false)
 
 @df pf plot!(:time, :nutrient_n - :data, color=3, linewidth=2, label="Nutrient_n")
 @df pf plot!(:time, :logistic_n- :data, color=2, linewidth=2, label="Logistic_n")
@@ -63,20 +63,13 @@ p2 = hline([0.0], color=:black, alpha=0.6, linestyle=:dash)
 @df pf plot!(:time, :logistic- :data, color=2, linestyle=:dash, linewidth=2, label="Nutrient")
 @df pf plot!(:time, :interface- :data, color=1, linestyle=:dash, linewidth=2, label="Interface")
 plot!(xlabel="Time [hr]", ylabel="Residual [μm]")
-#savefig("figs/figs_temp/fig3_b.svg")
 
-##
-p3 = hline([0.0], color=:black, alpha=0.6, linestyle=:dash)
-
-@df pf plot!(:time, abs.(:nutrient_n - :data)./:data, color=3, linewidth=2, label="Nutrient_n")
-@df pf plot!(:time, abs.(:logistic_n- :data)./:data, color=2, linewidth=2, label="Logistic_n")
-@df pf plot!(:time, abs.(:interface_n- :data)./:data, color=1, linewidth=2, label="Interface_n")
-@df pf plot!(:time, abs.(:logistic- :data)./:data, color=2, linestyle=:dash, linewidth=2, label="Nutrient")
-@df pf plot!(:time, abs.(:interface- :data)./:data, color=1, linestyle=:dash, linewidth=2, label="Interface")
-plot!(ylim=(0.0, 1.0))
-#savefig("figs/figs_temp/fig3_b2.svg")
-
-
+plot!(inset = (1, bbox(0.35, 0.6, 0.3, 0.35)), subplot=2)
+@df pf scatter!(:data, :nutrient_n, color=3, markersize=2, markerstrokecolor=:auto, label="nutrient_n", subplot=2)
+@df pf scatter!(:data, :logistic, color=2, linestyle=:dash, markersize=2, markerstrokecolor=:auto, label="Logistic", subplot=2)
+@df pf scatter!(:data, :interface, color=1, linestyle=:dash, markersize=2, markerstrokecolor=:auto, label="Interface", subplot=2)
+@df pf plot!([0.0, 200.0], [0.0, 200.0], color=:black, alpha=0.5, linestyle=:dash, linewidth=2,legend=false, subplot=2)
+plot!(xticks=[], yticks=[], subplot=2)
 ##
 function plot_slope(y, x, dt, c, l)
     smooth, slope, slope_error = smooth_heights(y, x, dt)
@@ -85,24 +78,18 @@ end
 
 dt = 4.0
 h, dh, dh_e = smooth_heights(pf.data, pf.time, dt)
-p4 = plot(xlabel="Height [μm]", ylabel="Δ Height [μm/hr]", grid=false)
+p4 = plot(xlabel="Height [μm]", ylabel="Δ Height [μm/hr]")
 scatter!(h, dh, xerror=pf.data_error, yerror=dh_e, color=:black, alpha=0.75,
          markersize=3, label="Data ⟨3⟩")
 #vline!([h[findmax(dh)[2]]], color=:black, linestyle=:dash, label=false)
-#hline!([maximum(dh)], color=:black, linestyle=:dash, label=false, legend=:right)
+hline!([0.0], color=:black, linestyle=:dash, label=false, legend=:right)
 plot_slope(pf.interface, pf.time, dt, 1, "Interface")
 plot_slope(pf.nutrient_n, pf.time, dt, 2, "Nutrients")
 plot_slope(pf.logistic_n, pf.time, dt, 3, "Logistic")
 #savefig("figs/figs_temp/fig3_c.svg")
 
 ##
-plot()
-@df pf scatter!(:data, :nutrient_n, color=3, linewidth=2, label="Nutrient_n, R²=0.966")
-@df pf scatter!(:data, :logistic, color=2, linestyle=:dash, linewidth=2, label="Logistic, R²=0.9199")
-@df pf scatter!(:data, :interface, color=1, linestyle=:dash, linewidth=2, label="Interface, R²=0.999")
-plot!([0.0, 200.0], [0.0, 200.0], color=:black, alpha=1.0, linestyle=:dash, legend=:topleft, label=false)
-plot!(xlabel="Data [μm]", ylabel="Prediction [μm]")
-#savefig("figs/figs_temp/fig3_b3.svg")
+
 
 ##
 function get_average(df, strain_name)
@@ -148,6 +135,6 @@ allfit = DataFrame(CSV.File("data/sims/allpointsol.csv"))
 plot!([-20, -21], [[-10, -4],[-10, -4],[-10, -4] ], color=:black, 
       linestyle=[:solid :dash :dot], label=["Interface_all" "Interface_48" "Logistic_48"])
 plot!(xlim=(0, 350), dpi=400)
-savefig("figs/figs_temp/fig3_allfit.svg")
+#savefig("figs/figs_temp/fig3_allfit.svg")
 
 
