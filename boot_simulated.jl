@@ -51,6 +51,7 @@ function boot_fit2(df, n)
     end
     return reduce(hcat, p_bootstrap)'
 end
+##
 Df =  DataFrame(CSV.File("data/sims/simulated_data.csv"))
 tf = filter(x-> x.S==100, Df)
 @df tf scatter(:t, :h, group=:r)
@@ -58,7 +59,7 @@ tf = filter(x-> x.S==100, Df)
 ##
 pf = DataFrame()
 n = 128
-for s in unique(Df.S)[61:80]
+for s in unique(Df.S)[101:end]
     print(s)
     tf = filter(x-> x.S==s, Df)
     pars = boot_fit2(tf, n)
@@ -67,4 +68,7 @@ for s in unique(Df.S)[61:80]
     append!(pf, new_frame)
 end
 ##
-CSV.write("data/sims/sims_bootstrap_04.csv", pf)
+CSV.write("data/sims/sims_bootstrap_06.csv", pf)
+##
+Df =  DataFrame(CSV.File("data/sims/sims_bootstrap_06.csv"))
+
