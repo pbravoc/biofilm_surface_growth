@@ -54,7 +54,9 @@ end
 ##
 Df =  DataFrame(CSV.File("data/sims/simulated_data.csv"))
 tf = filter(x-> x.S==100, Df)
-@df tf scatter(:t, :h, group=:r)
+@df tf scatter(:t, :h, group=:r, title="α=0.7, β=0.05, L=10.0", xlabel="Time [hr]", ylabel="Height[μm/hr]",
+               legend=:topleft, size=(450, 400), markersize=4, dpi=400)
+savefig("figs/bootstrapping/simulated_timelapse.png")
 
 ##
 pf = DataFrame()
@@ -70,5 +72,17 @@ end
 ##
 CSV.write("data/sims/sims_bootstrap_06.csv", pf)
 ##
-Df =  DataFrame(CSV.File("data/sims/sims_bootstrap_06.csv"))
+Df = DataFrame()
+for i in ["01", "02", "03", "04", "05", "06"]
+    df =  DataFrame(CSV.File("data/sims/sims_bootstrap_"*i*".csv"))
+    append!(Df, df)
+end
 
+@df Df scatter(:α, :β, :L, grouping=:S, markersize=1, markerstrokecolor=:auto,
+               xlim=(0.15, 0.95), ylim=(0.0, 0.15), zlim=(0.0, 60.0), label=false,
+               xlabel="Alpha [um/hr]", ylabel="Beta [um/hr]", zlabel="L [um]",
+               size=(800, 600))
+
+#savefig("figs/bootstrapping/scatter_sims.html")
+##
+@df Df scatter(:α, :β, grouping=:S, xlim=(0.15, 0.95), ylim=(0.0, 0.15))

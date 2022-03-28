@@ -89,6 +89,11 @@ function calculations(df)
     df.hR = Int.(floor.(length.(df.profile)/2 .+ h./2))
     df.avg_height = [NaNMath.mean(df.profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
     df.std_height = [NaNMath.std(df.profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
+    for n in findall(isnan.(df.avg_height))     # Fix NaN values with linear interpolation, print a warning.
+        print("NaN height found in file:"*df.file[n])
+        df.avg_height[n] = 0.5*df.avg_height[n-1]+0.5*df.avg_height[n+1]
+        df.std_height[n] = 0.5*df.std_height[n-1]+0.5*df.std_height[n+1]
+    end
     forward_change = []
     smooth_height = []
     slope = []
@@ -145,3 +150,54 @@ Data.slope_error = round.(Data.slope_error, digits=3)
 
 ##
 CSV.write("data/timelapses/database.csv", Data)
+##
+folder = tl_folders[5]
+strain_dataframe = add_to_database(rt_folder*folder*"/")
+df = strain_dataframe[(strain_dataframe.border_l .!= 0), :]
+#calculated = calculations(strain_dataframe)
+
+##
+df.mid_height = [df.profile[i][Int(floor(length(df.profile[i])/2))] for i=1:size(df)[1]]
+df.max_height = [NaNMath.maximum(df.profile[i]) for i=1:size(df)[1]]
+df.min_height = [NaNMath.minimum(df.profile[i]) for i=1:size(df)[1]]
+##
+l = [findall(x->!isnan(x), y)[1] for y in df.profile]
+r = [findall(x->!isnan(x), y)[end] for y in df.profile]
+df.width = (r-l)* 0.17362 * 1e-3 * 50 ./ df.zoom
+h = 2e3 ./ (0.17362 * 50 ./ df.zoom)
+df.hL = Int.(floor.(length.(df.profile)/2 .- h./2))
+df.hR = Int.(floor.(length.(df.profile)/2 .+ h./2))
+##
+df.avg_height = [NaNMath.mean(df.profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
+df.std_height = [NaNMath.std(df.profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
+##
+forward_change = []
+smooth_height = []
+slope = []
+slope_error = []
+##
+for repli in unique(df.replicate)
+    tf = filter(row->row.replicate.==repli, df);
+    #dh = d_height(tf)
+    h, s, se = smooth_heights(tf, 4.0)
+    #append!(forward_change, dh)
+    #append!(smooth_height, h)
+    #append!(slope, s)    
+    #append!(slope_error, se)    
+end
+##
+df.forward_change = forward_change 
+df.smooth_height = smooth_height
+df.slope = slope
+df.slope_error = slope_error
+return df[!, Not(:profile)]
+##
+df = filter(x-> x.time .< 48 && x.replicate in ["A", "B", "C"], Data)
+@df df plot(:time, :avg_height, group=:strain, yerror=:std_height, alpha=0.5)
+##
+plot(isnan.(df.avg_height)[340:350])
+##
+plot(df.profile[348])
+vline!([df.hL[349], df.hR[349]])
+##
+NaNMath.mean(df.profile[349][df.hL[349]:df.hR[349]])
