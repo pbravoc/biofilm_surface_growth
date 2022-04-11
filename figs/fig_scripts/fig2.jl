@@ -30,7 +30,7 @@ a = int_c(0.1)
 sol_dis = cumsum(c(x, dt)) .- 1
 sol_ana = int_c.(x)
 sol_dis = G.(x, sqrt(D*dt))
-
+##
 l = @layout [[a{0.7h}
               b{0.3h}] [c{0.7h}
                         d{0.3h}]]
@@ -46,8 +46,8 @@ p1 = @df df plot(:time, :avg_height, group=:replicate,
              grid=false,
              marker=:circle, markersize=1, markerstrokecolor=:auto,
              inset = (1, bbox(0.5, 0.45, 0.5, 0.45)), subplot=2,
-             linewidth=1.5, subplot=2, yscale=:log10)
-
+             linewidth=1.5,yscale=:log10)
+##
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false,
@@ -57,14 +57,14 @@ p2 = @df df plot(:avg_height, :slope, group=:replicate,
 p2 = vline!([27.5], color=:black, linestyle=:dash, legend=false)
 p2 = annotate!(20, 1, text("I", 8, "courier"))
 p2 = annotate!(40, 1, text("II", 8, "courier"))
-
+##
 p3 = plot(x, myc, xlabel="Distance from interface", grid=false, color=1, linewidth=2, label="Concentration", size=(400, 400), xlim=(0,2))
-p3 = plot!(x, sol_ana ./ maximum(sol_ana), color=2, linewidth=2, label="Cumulative", xlim=(0,2))
-p3 = plot!(x, sol_dis ./ maximum(sol_dis), color=2,  linewidth=2,linestyle=:dash,label="Approximation")
-p3 = vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, ylabel="Lim. nutrient")
-p3 = xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"])
-
-
+#p3 = plot!(x, sol_ana ./ maximum(sol_ana), color=2, linewidth=2, label="Cumulative", xlim=(0,2))
+#p3 = plot!(x, sol_dis ./ maximum(sol_dis), color=2,  linewidth=2,linestyle=:dash,label="Approximation")
+p3 = vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, )
+p3 = xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200))
+savefig("figs/fig2/2_conconly.svg")
+##
 
 cube_data = [161.07 102.99 108.80
              179.58 92.46 92.48

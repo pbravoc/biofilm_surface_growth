@@ -11,28 +11,6 @@ function d_height(df)
     return h_change
 end
 
-#= function smooth_heights(df, time_window)
-    loess_height, slope = zeros(size(df)[1]), zeros(size(df)[1])
-    loess_height .= NaN
-    slope .= NaN
-    if size(df)[1] > 2
-        per_window = time_window / (df.time[end]-df.time[1])
-        model = loess(df.time, df.avg_height, span=per_window, degree=1)
-        loess_height = [predict(model, Float64(df.time[i])) for i=1:length(df.time)]
-        slope = zeros(length(df.time))
-        dt = 0.1
-        t = df.time[1]
-        slope[1] = (predict(model, Float64(t+dt))-predict(model,Float64(t))) / dt
-        t = df.time[end]
-        slope[end] = (predict(model, Float64(t))-predict(model,Float64(t-dt))) / dt
-        for i=2:length(df.time)-1
-            t = df.time[i]
-            slope[i] = (predict(model, Float64(t+dt))-predict(model,Float64(t-dt))) / (2*dt)
-        end
-    end
-    return loess_height, slope
-end =#
-
 function smooth_heights(df, dt)
     model(x, p) = p[1] .+ p[2]*x # Linear model
     y_smooth = zeros(size(df)[1])

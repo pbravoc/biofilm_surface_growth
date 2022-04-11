@@ -1,6 +1,6 @@
 using DataFrames, CSV
 using Statistics, NaNMath
-using Plots, StatsPlots, ColorSchemes
+using Plots, StatsPlots, ColorSchemes, Colors
 using LsqFit
 
 function get_average(df, strain_name)
@@ -41,18 +41,27 @@ end
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x->x.strain .== "bgt127" && 
                x.time .<= 48 && x.replicate =="A", Df)
-pf = DataFrame(CSV.File("data/sims/bgt127.csv"))
+#pf = DataFrame(CSV.File("data/sims/f3a_heights_bounded.csv"))
+pf = DataFrame(CSV.File("data/sims/f3a_heights_unbounded.csv"))
 
 ##
-p1 = @df pf scatter(:time, :data, yerr=:data_error, markersize=2, color=:black,
+p1 = @df pf scatter(:time, :data, yerr=:data_error, markersize=3, color=:black,
                legend=:topleft, label="Data")
-@df pf plot!(:time, :nutrient_n, color=3, linewidth=2, label="Nutrient_n")
-@df pf plot!(:time, :logistic_n, color=2, linewidth=2, label="Logistic_n")
-@df pf plot!(:time, :interface_n, color=1, linewidth=2, label="Interface_n")
-@df pf plot!(:time, :logistic, color=2, linestyle=:dash, linewidth=2, label="Nutrient")
+@df pf plot!(:time, :nutrient_n, color=2, linewidth=2, label="Nutrient")
+@df pf plot!(:time, :logistic_n, color=3, linewidth=2, label="Logistic (n)")
+@df pf plot!(:time, :interface_n, color=1, linewidth=2, label="Interface (n)")
+@df pf plot!(:time, :logistic, color=2, linestyle=:dash, linewidth=2, label="Logistic")
 @df pf plot!(:time, :interface, color=1, linestyle=:dash, linewidth=2, label="Interface")
-plot!(xlabel="Time [hr]", ylabel="Heigt [μm]", grid=false)
-#savefig("figs/figs_temp/fig3_a.svg")
+plot!(xlabel="Time [hr]", ylabel="Heigt [μm]", grid=false, size=(500, 400), dpi=300)
+savefig("figs/fig3/a_unboundedfit.svg")
+##
+@df pf2 plot(:time, :nutrient_n, color=:red, linewidth=2, label="Nutrient", legend=:topleft)
+@df pf2 plot!(:time, :logistic_n, color=:blue, linewidth=2, label="Logistic")
+#@df pf plot!(:time, :interface_n, color=3, linewidth=2, label="Interface_n")
+#@df pf plot!(:time, :logistic, color=2, linestyle=:dash, linewidth=2, label="Nutrient")
+#@df pf plot!(:time, :interface, color=1, linestyle=:dash, linewidth=2, label="Interface")
+plot!(xlabel="Time [hr]", ylabel="Heigt [μm]", grid=false, size=(500, 400), dpi=300)
+#savefig("figs/fig3/a_literaturesimple_unboundedlong.svg")
 
 ##
 p2 = @df pf plot(:time, :data - :data, color=:black, linestyle=:dash, ribbon=:data_error, fillalpha=0.2, label=false)
@@ -78,14 +87,15 @@ end
 
 dt = 4.0
 h, dh, dh_e = smooth_heights(pf.data, pf.time, dt)
-p4 = plot(xlabel="Height [μm]", ylabel="Δ Height [μm/hr]")
+p3 = plot(xlabel="Height [μm]", ylabel="Δ Height [μm/hr]")
 scatter!(h, dh, xerror=pf.data_error, yerror=dh_e, color=:black, alpha=0.75,
          markersize=3, label="Data ⟨3⟩")
 #vline!([h[findmax(dh)[2]]], color=:black, linestyle=:dash, label=false)
 hline!([0.0], color=:black, linestyle=:dash, label=false, legend=:right)
 plot_slope(pf.interface, pf.time, dt, 1, "Interface")
-plot_slope(pf.nutrient_n, pf.time, dt, 2, "Nutrients")
-plot_slope(pf.logistic_n, pf.time, dt, 3, "Logistic")
+plot_slope(pf.nutrient_n, pf.time, dt, 2, "Nutrients (n)")
+plot_slope(pf.logistic_n, pf.time, dt, 3, "Logistic (n)")
+plot!(xlim=(-1, 220.0), ylim=(-0.1, 13.0), legend=:topright)
 #savefig("figs/figs_temp/fig3_c.svg")
 
 ##
@@ -108,7 +118,7 @@ df = filter(x->x.replicate in ["A", "B", "C"] && x.time .< 48, Df)
 df2 = filter(x->x.replicate in unique(Df.replicate)[4:end], Df)
 
 #@df df scatter(:time, :avg_height, markersize=1, legend=false)
-plot(xlabel="Time")
+p4 = plot(xlabel="Time")
 get_average(df, "jt305")
 get_average(df, "bgt127")
 get_average(df, "gob33")
@@ -137,4 +147,11 @@ plot!([-20, -21], [[-10, -4],[-10, -4],[-10, -4] ], color=:black,
 plot!(xlim=(0, 350), dpi=400)
 #savefig("figs/figs_temp/fig3_allfit.svg")
 
-
+##
+l = @layout [
+    a{0.5w} [b{0.5h}  
+             c{0.5h}]
+    d{0.35h}
+]
+plot(p1, p2, p3, p4, size=(900, 600), layout=l)
+savefig("figs/fig3/fig3.svg")

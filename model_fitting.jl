@@ -48,100 +48,92 @@ function interface(du, u, p, t)
     du[1] = α*G.(h, hstar) - β*h 
     return du
 end
-function param_fit(model_ode, model_params, pl, ph, u0)
-    prob = ODEProblem(model_ode, u0, (0.0, 50.0), model_params) # Set the problem
+function fit_data(t_data, h_data, model, model_params, pl, ph, u0)
+    idxs = sortperm(t_data)  # Sort time indexes
+    t_data, h_data = t_data[idxs], h_data[idxs]
+    prob = ODEProblem(model, u0, (0.0, t_data[end]), model_params)
     function loss(p)
-        sol = solve(prob, Tsit5(), p=p, saveat=t, save_idxs=1) # Force time savings to match data
+        sol = solve(prob, Tsit5(), p=p, saveat=t_data, save_idxs=1) # Force time savings to match data
         sol_array = reduce(vcat, sol.u)
-        loss = sum(abs2, sol_array .- h_avg)
+        loss = sum(abs2, sol_array .- h_data)
         return loss, sol
-    end
-    result_ode = DiffEqFlux.sciml_train(loss, params_guess[i], 
-                                        lower_bounds = pl,
-                                        upper_bounds = ph, 
-                                        maxiters=100)
-    return result_ode 
-end
+    end 
+    result_ode = DiffEqFlux.sciml_train(loss, model_params) 
+                                        #lower_bounds = pl,
+                                        #upper_bounds = ph)
+    return result_ode
+end 
 
-## Unbounded parameters fitting and simulation
+## Bounded parameters fitting
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
-df = filter(x-> x.replicate in ["A", "B", "C"] && x.strain .== "jt305", Df)[1:end-1]
+df = filter(x-> x.replicate in ["A", "B", "C"] && x.strain .== "bgt127", Df)
 @df df plot(:time, :avg_height, group=(:replicate))
 ##
-t, h_avg, h_std = get_average(df, "jt305")
-h_avg = abs.(h_avg)
+df.avg_height = abs.(df.avg_height)
+t, h_avg, h_std = get_average(df, "bgt127")
+scatter(t, h_avg, yerror=h_std, color=:black, alpha=0.5)
 ##
 u01, u02 = [0.2], [0.2, 1.0]
 models = [nutrient_n, logistic_n, interface_n, logistic, interface]
 starting_conditions = [u02, u02, u02, u01, u01]
-params_guess = [[0.8, 0.001, 0.9, 0.12], 
+params_guess = [[0.8, 0.1, 0.9, 0.12], 
                 [0.5, 100, 0.2, 0.05],
                 [0.8, 0.07, 15, 0.01, 0.01],
                 [0.5, 150.0],
                 [0.8, 0.07, 15]]
-params_low =    [[1e-3, 1e-4, 0.0, 0.0], 
-                [1e-2, 10.0, 0.0, 0.0],
-                [1e-2, 1e-5, 5.0, 0.0, 0.0],
-                [1e-3, 50.0],
-                [0.0, 0.0, 0.0]]
-params_high =   [[Inf, 1e1, 1.0, 1.0], 
-                [Inf, 1e4, 1.0, 1.0],
-                [Inf, 1e1, 5e2, 1.0, 1.0],
-                [Inf, 1e4],
-                [30.0, 1e1, 50.0]]
+params_low =    [[0.1, 0.01, 0.01, 0.001], 
+                [1e-2, 10.0, 0.001, 0.001],
+                [1e-2, 1e-5, 5.0, 0.001, 0.001],
+                [1e-3, 10.0],
+                [0.01, 0.05, 3.0]]
+params_high =   [[5.0, 1e1, 1.0, 1.0], 
+                [5.0, 1000.0, 1.0, 1.0],
+                [5.0, 2.0, 1000.0, 1.0, 1.0],
+                [5.0, 1000.0],
+                [5.0, 1.0, 50.0]]
+##
 model_params = []
 solutions = []
-sol_guess = []
-for i=1:5
-    print(models[i])
-    problem = ODEProblem(models[i], starting_conditions[i], 
-                         (0.0,48.0), params_guess[i])
-    sol = solve(problem, saveat=0.5, save_idxs=1)
-    append!(sol_guess, [sol])
-end
+##
+i = 5
+result_ode = fit_data(t, h_avg, models[i], 
+                        params_guess[i], params_low[i], params_high[i],
+                        starting_conditions[i])
+##
+problem = ODEProblem(models[i], starting_conditions[i], 
+                        (0.0,48.5), result_ode)
+sol = solve(problem, saveat=t, save_idxs=1)   
+##
+append!(solutions, [sol])
+append!(model_params, [result_ode])
+##
 plot()
-[plot!(s) for s in sol_guess]
-scatter!(t, h_avg)
-
-##
-model_params = []
-solutions = []
-##
-for i=1:5
-    print(models[i])
-    prob = ODEProblem(models[i], starting_conditions[i], (0.0, 50.0), params_guess[i]) # Set the problem
-    function loss(p)
-        sol = solve(prob, Tsit5(), p=p, saveat=t, save_idxs=1) # Force time savings to match data
-        sol_array = reduce(vcat, sol.u)
-        loss = sum(abs2, sol_array .- h_avg)
-        return loss, sol
-    end
-    result_ode = DiffEqFlux.sciml_train(loss, params_guess[i], 
-                                        lower_bounds = params_low[i],
-                                        upper_bounds = params_high[i], 
-                                        maxiters=100)
-
-    probnew = ODEProblem(models[i], starting_conditions[i], (0.0, 50.0), result_ode)
-    sol = solve(probnew, saveat=t, save_idxs=1)
-    append!(solutions, [sol])
-    append!(model_params, [result_ode])
-end
-    #scatter(t, h_avg)
-    #plot!(sol)
-
+[plot!(s) for s in solutions]
+plot!(xlabel="Time [hr]", ylabel="Height [μm]", legend=:topleft)
 ##
 pf = DataFrame()
 pf.names = ["Nutrient_n", "Logistic_n", 
             "Interface_n", "Nutrient", "Interface"]
 pf.parameters = [x.u for x in model_params] 
-CSV.write("data/sims/gob33_params.csv", pf)
-##
+CSV.write("data/sims/fig3_params_unbounded.csv", pf)
 ##
 pf = DataFrame("time"=>t, "data"=>h_avg, "data_error"=>h_std,
                "nutrient_n"=>solutions[1].u, "logistic_n"=>solutions[2].u, 
                "interface_n"=>solutions[3].u, "logistic"=>solutions[4].u, 
                "interface"=>solutions[5].u)
-CSV.write("data/sims/gob33.csv", pf)
+CSV.write("data/sims/f3a_heights_unbounded.csv", pf)
+
+##
+pf = DataFrame("time"=>solutions2[1].t,
+               "nutrient_n"=>solutions2[1].u, "logistic_n"=>solutions2[2].u, 
+               "interface_n"=>solutions2[3].u, "logistic"=>solutions2[4].u, 
+               "interface"=>solutions2[5].u)
+CSV.write("data/sims/f3a_heights_unboundedlong.csv", pf)
+
+##
+plot()
+[plot!(s) for s in solutions2]
+plot!(xlabel="Time [hr]", ylabel="Height [μm]", legend=:topleft)
 
 ##
 @df pf scatter(:time, :data, yerror=:data_error, color=:black, alpha=0.3)
