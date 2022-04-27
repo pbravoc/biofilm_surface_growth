@@ -1,0 +1,9 @@
+# 3 replicates (A:C) grown for 48 hours (001:384)
+# 9 sealed control plates (D:L) measured sporadically until 2 weeks. D-E-F were measured twice. After D2 all of the controls were measured at 10x
+# Sample A has negative values between n=[5:15]. Weird stitching/feature around px 12500
+# Sample B some minor adjustments between n=[1:25].
+# Sample C weird stitching feature again at px 7500 and 14000 (issues early?)[n=1:22]. Right CR out of focus at n=[50:60]. n=[77:79] left side goes out of focus
+
+1630098231
+3
+15

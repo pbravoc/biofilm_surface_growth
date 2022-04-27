@@ -47,6 +47,7 @@ p1 = @df df plot(:time, :avg_height, group=:replicate,
              marker=:circle, markersize=1, markerstrokecolor=:auto,
              inset = (1, bbox(0.5, 0.45, 0.5, 0.45)), subplot=2,
              linewidth=1.5,yscale=:log10)
+
 ##
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
@@ -57,6 +58,19 @@ p2 = @df df plot(:avg_height, :slope, group=:replicate,
 p2 = vline!([27.5], color=:black, linestyle=:dash, legend=false)
 p2 = annotate!(20, 1, text("I", 8, "courier"))
 p2 = annotate!(40, 1, text("II", 8, "courier"))
+## supp1
+@df df plot(:time, :slope, group=:replicate,
+            fillalpha=0.3, alpha=0.8,
+            ribbon=:slope_error, grid=false,
+            marker=:circle, markersize=3.5, 
+            xlabel="Time [hr]", ylabel="Δ Height [μm/hr]",
+            linewidth=2)
+vline!([7.5], color=:black, linestyle=:dash, label=false)
+annotate!(6.5, 1, text("I", 8, "courier"))
+annotate!(9, 1, text("II", 8, "courier"))
+plot!(size=(500, 400))
+savefig("figs/fig2/2_supp1.svg")
+
 ##
 p3 = plot(x, myc, xlabel="Distance from interface", grid=false, color=1, linewidth=2, label="Concentration", size=(400, 400), xlim=(0,2))
 #p3 = plot!(x, sol_ana ./ maximum(sol_ana), color=2, linewidth=2, label="Cumulative", xlim=(0,2))
@@ -83,4 +97,4 @@ p4 = groupedbar(cube_sorted, color=1, label=false, grid=false, xticks=[1,2,3], y
 
 plot(p1, p3, p2, p4,layout=l, size=(700, 450), dpi=300)
 #savefig("figs/figs_temp/fig2.png")
-
+##

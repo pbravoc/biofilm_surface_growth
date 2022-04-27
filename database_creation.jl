@@ -94,8 +94,7 @@ end
 
 ##
 rt_folder = "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/"
-tl_folders = readdir(rt_folder)[1:7]
-
+tl_folders = readdir(rt_folder)[1:9]
 ##
 Data = DataFrame(file = String[], replicate = String[], time=Float32[], border_l = Int[],
                  border_r = Int[], offset_l = Float32[], offset_r = Float32[], 

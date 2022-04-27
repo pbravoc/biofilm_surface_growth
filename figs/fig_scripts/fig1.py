@@ -1,13 +1,14 @@
+#%%
 import h5py
 import numpy as np
 from glob import glob 
 import matplotlib.pyplot as plt
 import os
-from biosurf_cpu import *
 import matplotlib.gridspec as gridspec
 import matplotlib.patheffects as PathEffects
+from scipy.optimize import curve_fit
 
-
+#%%
 def datx2py(file_name):
     """Loads a .datx into Python, credit goes to gkaplan.
     https://gist.github.com/g-s-k/ccffb1e84df065a690e554f4b40cfd3a"""
@@ -55,6 +56,32 @@ def datx2py(file_name):
         h5data = _decode_h5(f)
     return h5data
 
+def straightline(x, a, b):
+    return a*x + b
+
+def cleanpoints(x, y):
+    idx = y[~np.isnan(y)]
+    return x[idx], y[idx]
+
+def subplane(img):
+    """Substract a plane from the image"""
+    X = np.nanmean(img, axis=0)
+    valid = ~np.isnan(X)
+    popt, pcov = curve_fit(straightline, np.arange(len(X))[valid], X[valid])
+    planeX = straightline(np.arange(len(X)), popt[0], popt[1])
+    img2 = np.zeros_like(img)
+    for i in range(len(planeX)):
+        img2[:, i] = img[:,i] - planeX[i]
+    
+    Y = np.nanmean(img2, axis=1)
+    valid = ~np.isnan(Y)
+    popt, pcov = curve_fit(straightline, np.arange(len(Y))[valid], Y[valid])
+    planeY = straightline(np.arange(len(Y)), popt[0], popt[1])
+    img3 = np.zeros_like(img2)
+    for i in range(len(planeY)):
+        img3[i, :] = img2[i,:] - planeY[i]
+    return img3
+
 def get_data(datx_file):
     """Returns the Surface and Intensity data from a single .datx file"""
     myh5 = datx2py(datx_file)                      # File is the string with the location of the file
@@ -96,7 +123,8 @@ t = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/data/t
 
 xs = (np.arange(data.shape[1]) - data.shape[1]/2)*0.173
 
-
+#%%
+my_cmap = 'viridis'
 fig = plt.figure(figsize=(12, 7), constrained_layout=True)
 spec = fig.add_gridspec(ncols=1, nrows=4, height_ratios=[1, 1, 1, 3])
 
@@ -109,15 +137,15 @@ plt.text(0.01, 0.75, 'A', horizontalalignment='center', fontsize=18,
 
 ax2 = plt.subplot(spec[1])
 plt.axis('off')
-ax2.imshow(new_img/1000, cmap="turbo", interpolation="none")
+ax2.imshow(new_img/1000, cmap=my_cmap, interpolation="none")
 ax2.set_aspect('equal')
 norm = plt.Normalize(vmin=np.nanmin(new_img/1000), vmax=np.nanmax(new_img/1000))
-sm = plt.cm.ScalarMappable(cmap='turbo', norm=norm)
+sm = plt.cm.ScalarMappable(cmap=my_cmap, norm=norm)
 cbar = plt.colorbar(sm, aspect=5, shrink = 0.7)
 cbar.ax.tick_params(labelsize=14) 
 cbar.ax.set_ylabel('Z [$\mu m$]', rotation=90, fontsize=14)
 cbar.set_ticks([0, 2,4])
-cmap = plt.cm.ScalarMappable(norm=norm, cmap='turbo')
+cmap = plt.cm.ScalarMappable(norm=norm, cmap=my_cmap)
 cmap.set_array([])
 txt = plt.text(0.01, 0.75, 'B', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax2.transAxes)
@@ -136,12 +164,12 @@ plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
 ax4 = plt.subplot(spec[3])
 norm = plt.Normalize(vmin=0, vmax=t[-1])
-sm = plt.cm.ScalarMappable(cmap='turbo', norm=norm)
+sm = plt.cm.ScalarMappable(cmap=my_cmap, norm=norm)
 cbar = plt.colorbar(sm)
 cbar.ax.tick_params(labelsize=14) 
 cbar.ax.set_ylabel('Time [hr]', rotation=90, fontsize=14)
 cbar.set_ticks([0, 4, 8, 12, 16, 20, 24])
-cmap = plt.cm.ScalarMappable(norm=norm, cmap='turbo')
+cmap = plt.cm.ScalarMappable(norm=norm, cmap=my_cmap)
 cmap.set_array([])
 my_colors = [cmap.to_rgba(j) for j in t]
 for i in range(1, data.shape[0]):
@@ -154,4 +182,6 @@ plt.yticks(fontsize=14)
 plt.ylim(-2, 165)
 plt.text(0.01, 0.95, 'D', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax4.transAxes)
-#plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/figs_temp/1_updated.svg")
+##
+plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/large_space.svg") # Big distance between panels, final touches on inkscape.
+# %%
