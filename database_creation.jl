@@ -41,8 +41,8 @@ simple metrics
 """
 function add_to_database(folder)
     strain = match(r"(\d{4})-(\d{2})-(\d{2})_(\w+)", folder)[4]
-    timelapses = glob("profiles_*.npy", folder*"/Clean/")
-    df = DataFrame(CSV.File(folder*"/Clean/cleaning.csv"))
+    timelapses = glob("profiles_*.npy", folder*"/")
+    df = DataFrame(CSV.File(folder*"/cleaning.csv"))
     profile = []
     for tl in timelapses
         curr_profile = npzread(tl)
@@ -93,8 +93,11 @@ function calculations(df)
 end
 
 ##
-rt_folder = "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/"
-tl_folders = readdir(rt_folder)[1:9]
+rt_folder = "data/timelapses"
+tl_folders = readdir(rt_folder)[1:10]
+
+rt_folder = "data/timelapses"
+tl_folders= ["longtime"]
 ##
 Data = DataFrame(file = String[], replicate = String[], time=Float32[], border_l = Int[],
                  border_r = Int[], offset_l = Float32[], offset_r = Float32[], 
@@ -102,14 +105,19 @@ Data = DataFrame(file = String[], replicate = String[], time=Float32[], border_l
                  max_height = Float32[], min_height = Float32[], width = Float32[], hL = Int[], hR = Int[],
                  avg_height = Float32[], std_height = Float32[], forward_change = Float32[], 
                  smooth_height = Float32[], slope = Float32[], slope_error= Float32[])
+##
 for folder in tl_folders
     print(folder)
-    strain_dataframe = add_to_database(rt_folder*folder*"/")
+    strain_dataframe = add_to_database(rt_folder*"/"*folder*"/")
     strain_dataframe = strain_dataframe[(strain_dataframe.border_l .!= 0), :]
     calculated = calculations(strain_dataframe)
     global Data = vcat(Data, calculated)
 end
-
+##
+strain_dataframe = df[(df.border_l .!= 0), :]
+calculated = calculations(strain_dataframe)
+global Data = vcat(Data, calculated)
+##
 # Round some numbers up
 Data.time = round.(Data.time, digits=2)
 Data.offset_l = round.(Data.offset_l, digits=1)
@@ -126,55 +134,24 @@ Data.slope = round.(Data.slope, digits=3)
 Data.slope_error = round.(Data.slope_error, digits=3)
 
 ##
-CSV.write("data/timelapses/database.csv", Data)
+CSV.write("data/timelapses/longtime_data.csv", Data)
 ##
-folder = tl_folders[5]
-strain_dataframe = add_to_database(rt_folder*folder*"/")
-df = strain_dataframe[(strain_dataframe.border_l .!= 0), :]
-#calculated = calculations(strain_dataframe)
-
-##
-df.mid_height = [df.profile[i][Int(floor(length(df.profile[i])/2))] for i=1:size(df)[1]]
-df.max_height = [NaNMath.maximum(df.profile[i]) for i=1:size(df)[1]]
-df.min_height = [NaNMath.minimum(df.profile[i]) for i=1:size(df)[1]]
-##
-l = [findall(x->!isnan(x), y)[1] for y in df.profile]
-r = [findall(x->!isnan(x), y)[end] for y in df.profile]
-df.width = (r-l)* 0.17362 * 1e-3 * 50 ./ df.zoom
-h = 2e3 ./ (0.17362 * 50 ./ df.zoom)
-df.hL = Int.(floor.(length.(df.profile)/2 .- h./2))
-df.hR = Int.(floor.(length.(df.profile)/2 .+ h./2))
-##
-df.avg_height = [NaNMath.mean(df.profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
-df.std_height = [NaNMath.std(df.profile[i][df.hL[i]:df.hR[i]]) for i=1:size(df)[1]]
-##
-forward_change = []
-smooth_height = []
-slope = []
-slope_error = []
-##
-for repli in unique(df.replicate)
-    tf = filter(row->row.replicate.==repli, df);
-    #dh = d_height(tf)
-    h, s, se = smooth_heights(tf, 4.0)
-    #append!(forward_change, dh)
-    #append!(smooth_height, h)
-    #append!(slope, s)    
-    #append!(slope_error, se)    
+folder = "data/timelapses/longtime"
+print(folder)
+strain = "sw519"
+timelapses = glob("profiles_*.npy", folder*"/")
+df = DataFrame(CSV.File(folder*"/cleaning.csv"))
+profile = []
+for tl in timelapses
+    curr_profile = npzread(tl)
+    for i in range(1, size(curr_profile)[1])
+        append!(profile, [curr_profile[i,:]])
+    end
 end
+df.profile = profile
+df.strain = repeat([strain], size(df)[1])
+#strain_dataframe = add_to_database(rt_folder*"/"*folder*"/")
 ##
-df.forward_change = forward_change 
-df.smooth_height = smooth_height
-df.slope = slope
-df.slope_error = slope_error
-return df[!, Not(:profile)]
-##
-df = filter(x-> x.time .< 48 && x.replicate in ["A", "B", "C"], Data)
-@df df plot(:time, :avg_height, group=:strain, yerror=:std_height, alpha=0.5)
-##
-plot(isnan.(df.avg_height)[340:350])
-##
-plot(df.profile[348])
-vline!([df.hL[349], df.hR[349]])
-##
-NaNMath.mean(df.profile[349][df.hL[349]:df.hR[349]])
+strain_dataframe = strain_dataframe[(strain_dataframe.border_l .!= 0), :]
+calculated = calculations(strain_dataframe)
+global Data = vcat(Data, calculated)
