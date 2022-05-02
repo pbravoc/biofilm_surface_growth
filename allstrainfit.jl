@@ -1,3 +1,7 @@
+#= This code loops over the database, and returns the best fits
+for the 48 hour data. One for each timelapse, and one for the aggregated
+data.
+=#
 using DataFrames, CSV, CircularArrays
 using Statistics, NaNMath, StatsBase
 using DifferentialEquations, DiffEqFlux
@@ -20,7 +24,7 @@ function interface(du, u, p, t)
     return du
 end
 
-function fit_data(t_data, h_data, model, pguess=[0.8, 100.0])
+function fit_data(t_data, h_data, model, pguess=[0.8, 0.05, 15.0]) # [0.8, 100]
     idxs = sortperm(t_data)  # Sort time indexes
     t_data, h_data = t_data[idxs], h_data[idxs]
     u0 = [0.1]
@@ -46,20 +50,14 @@ Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 Df = filter(x-> x.avg_height .> 0, Df)                    # Smaller than 0 values don't make physical sense
 strain_list = unique(Df.strain)
 model_choice, n_parameters = logistic, 2
+model_choice, n_parameters = interface, 3
 P = []
 Strain = []
 Fit = []
 ##
-# Get the best fits for all timepoints
-for strain in strain_list 
-    df = filter(x-> x.strain .== strain, Df)              
-    fit_params = fit_data(df.time, df.avg_height, model_choice)
-    append!(P, [fit_params.u])
-    append!(Strain, [strain])
-    append!(Fit, ["all"])
-end
 # Get the best fits for less than 48h 
 for strain in strain_list 
+    println(strain)
     df = filter(x-> x.strain .== strain && x.time .<48, Df)              
     fit_params = fit_data(df.time, df.avg_height, model_choice)
     append!(P, [fit_params.u])
@@ -68,6 +66,7 @@ for strain in strain_list
 end
 # Get the best fits for each timelapse
 for strain in strain_list 
+    println(strain)
     for replicate in ["A", "B", "C"]     
         df = filter(x-> x.strain .== strain && x.time .<48 &&
                         x.replicate .==replicate, Df)
@@ -81,5 +80,6 @@ end
 pf = hcat(DataFrame("strain"=>Strain, "fit"=>Fit),
           DataFrame(Matrix(reduce(hcat, P)'), :auto))
 ## Save to file
-#parameter_df.h_max = parameter_df.α .* parameter_df.L ./ parameter_df.β
 CSV.write("data/timelapses/fit_params_"*string(model_choice)*".csv", pf)
+
+ 

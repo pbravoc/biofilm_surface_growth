@@ -1,3 +1,9 @@
+#=
+This script loops over the raw profiles + cleaning data on /data/timelapses
+calculates relevant scalar metrics and then saves all into a single 
+file for plotting. This database.csv output contains only experimental 
+outputs, no models included. 
+=#
 using DataFrames, NPZ, Arrow, CSV
 using Statistics, NaNMath, LsqFit, Glob
 
@@ -76,35 +82,34 @@ function calculations(df)
     smooth_height = []
     slope = []
     slope_error = []
+    order = []
     for repli in unique(df.replicate)
         tf = filter(row->row.replicate.==repli, df);
         dh = d_height(tf)
         h, s, se = smooth_heights(tf, 4.0)
+        my_order = Array(1:size(tf)[1])
         append!(forward_change, dh)
         append!(smooth_height, h)
         append!(slope, s)    
-        append!(slope_error, se)    
+        append!(slope_error, se)  
+        append!(order, my_order)    
     end
     df.forward_change = forward_change 
     df.smooth_height = smooth_height
     df.slope = slope
     df.slope_error = slope_error
+    df.order = order
     return df[!, Not(:profile)]
 end
 
-##
 rt_folder = "data/timelapses"
 tl_folders = readdir(rt_folder)[1:10]
-
-rt_folder = "data/timelapses"
-tl_folders= ["longtime"]
-##
 Data = DataFrame(file = String[], replicate = String[], time=Float32[], border_l = Int[],
                  border_r = Int[], offset_l = Float32[], offset_r = Float32[], 
                  displacement = Int32[], zoom =Int32[], strain = String[], mid_height = Float32[],
                  max_height = Float32[], min_height = Float32[], width = Float32[], hL = Int[], hR = Int[],
                  avg_height = Float32[], std_height = Float32[], forward_change = Float32[], 
-                 smooth_height = Float32[], slope = Float32[], slope_error= Float32[])
+                 smooth_height = Float32[], slope = Float32[], slope_error= Float32[], order=Int32[])
 ##
 for folder in tl_folders
     print(folder)
@@ -113,10 +118,6 @@ for folder in tl_folders
     calculated = calculations(strain_dataframe)
     global Data = vcat(Data, calculated)
 end
-##
-strain_dataframe = df[(df.border_l .!= 0), :]
-calculated = calculations(strain_dataframe)
-global Data = vcat(Data, calculated)
 ##
 # Round some numbers up
 Data.time = round.(Data.time, digits=2)
@@ -132,26 +133,6 @@ Data.forward_change = round.(Data.forward_change, digits=3)
 Data.smooth_height = round.(Data.smooth_height, digits=3)
 Data.slope = round.(Data.slope, digits=3)
 Data.slope_error = round.(Data.slope_error, digits=3)
-
 ##
-CSV.write("data/timelapses/longtime_data.csv", Data)
+CSV.write("data/timelapses/database.csv", Data)
 ##
-folder = "data/timelapses/longtime"
-print(folder)
-strain = "sw519"
-timelapses = glob("profiles_*.npy", folder*"/")
-df = DataFrame(CSV.File(folder*"/cleaning.csv"))
-profile = []
-for tl in timelapses
-    curr_profile = npzread(tl)
-    for i in range(1, size(curr_profile)[1])
-        append!(profile, [curr_profile[i,:]])
-    end
-end
-df.profile = profile
-df.strain = repeat([strain], size(df)[1])
-#strain_dataframe = add_to_database(rt_folder*"/"*folder*"/")
-##
-strain_dataframe = strain_dataframe[(strain_dataframe.border_l .!= 0), :]
-calculated = calculations(strain_dataframe)
-global Data = vcat(Data, calculated)
