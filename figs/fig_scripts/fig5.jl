@@ -77,6 +77,14 @@ for i=1:6
 end 
 display(P)
 savefig("figs/fig4/fig4.svg")
+
+##
+plot(size=(400, 300))
+@df df[df.strain .== "sw520",:] scatter!(:time, :avg_height, group=:replicate, legend=:topleft, markersize=4)
+plot!(xlabel="Time [hr]", ylabel="Height [μm]")
+savefig("figs/figs_temp/sw520_4.svg")
+#plot()
+#order_average(df, "sw520", 1)
 ##
 p1 = @df filter(x-> x.fit .== "48h", pf) scatter(:α, :β, group=:strain, markersize=7)
 @df filter(x-> x.fit .== "all", pf) scatter!(:α, :β, group=:strain, marker=:diamond,label=false, c=[1 2 3 4 5 6], markersize=7)
@@ -105,3 +113,16 @@ p1 = @df filter(x-> x.fit .== "48h", pf) scatter(:α, :β, :L, group=:strain, ma
 @df filter(x-> x.fit in ["A", "B", "C"], pf) scatter!(:α, :β, :L, group=:strain, label=false, c=[1 2 3 4 5 6], alpha=0.8, markersize=3)
 plot!(xlabel="Alpha [um/hr]", ylabel="Beta [um/hr]", zlabel="L [um]", size=(500, 400))
 savefig("figs/fig4/best_fits.html")
+##
+
+## SW520 FIX
+df = DataFrame(CSV.File("data/timelapses/database.csv"))
+df = filter(x-> x.strain .== "sw520" && 
+                x.replicate in ["A", "B", "C"], df)
+x_reference = df[df.strain .== "sw520",:].avg_height
+fix_array = zeros(length(x_reference))
+fix_array[65:78] .+= 50 .+ 2*Array(1:14)
+fix_array[210:234] .+= 70
+fix_array[198:234] .+= - Array(1:37)
+df.avg_height_fix = x_reference .- fix_array 
+
