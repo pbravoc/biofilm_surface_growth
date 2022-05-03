@@ -1,6 +1,8 @@
 #= This code loops over the database, and returns the best fits
 for the 48 hour data. One for each timelapse, and one for the aggregated
 data.
+It also calculated the best fit using 48h data + measurements from 
+longtime_data.csv
 =#
 using DataFrames, CSV, CircularArrays
 using Statistics, NaNMath, StatsBase
@@ -45,7 +47,7 @@ function logistic(du, u , p, t)
     du[1] = α*h*(1- h/(K_h))
     return du 
 end
-
+##
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 Df = filter(x-> x.avg_height .> 0, Df)                    # Smaller than 0 values don't make physical sense
 strain_list = unique(Df.strain)
@@ -76,7 +78,25 @@ for strain in strain_list
         append!(Fit, [replicate])
     end
 end
-
+# This is to get the 'long time' best fit.
+strain_list = ["bgt127", "gob33", "jt305"]
+Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
+df = filter(x-> x.strain in strain_list && x.time .< 48 &&
+                x.replicate in ["A", "B", "C"] &&
+                x.avg_height > 0 , Df)
+df2 = DataFrame(CSV.File("data/timelapses/longtime_data.csv"))
+for strain in strain_list 
+    tf = filter(x-> x.strain .== strain, df)
+    tf2 = filter(x-> x.strain .== strain, df2)
+    t = append!(tf.time, tf2.time)
+    h = append!(tf.avg_height, tf2.avg_height)
+    scatter(t, h)
+    p = fit_data(t, h, interface)
+    append!(P, [p.u])
+    append!(Strain, [strain])
+    append!(Fit, ["long"])
+end
+#
 pf = hcat(DataFrame("strain"=>Strain, "fit"=>Fit),
           DataFrame(Matrix(reduce(hcat, P)'), :auto))
 ## Save to file

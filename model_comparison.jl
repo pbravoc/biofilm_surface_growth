@@ -3,12 +3,12 @@ This script generates a new dataset that contains
 the avg + std height from the aggregated data (A, B, C), and 
 the respective best-fit predictions for multiple models in the 48h
 range.
+
+For bgt127, jt305, and gob33 we also calculate using the ALL fit.
 =# 
 
 using DataFrames, CSV
 using Statistics, NaNMath
-using Plots, StatsPlots, ColorSchemes, Colors
-using LsqFit
 using DifferentialEquations
 
 G(z, zstar) = z < zstar ? z : zstar 
@@ -33,31 +33,47 @@ function order_average(Df)
     return t, t_e, h, h_e
 end
 ##
-model_list = [interface]
+model_list = [interface]    # Add the other models
+longtime_list = ["bgt127", "gob33", "jt305"]
 df = DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.time .< 48 && x.avg_height .> 0 && 
                 x.replicate in ["A", "B", "C"], df)  
 pf = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
 Data = DataFrame(strain = String[], time=Float32[], time_error=Float32[],
                  avg_height = Float32[], std_height = Float32[], 
-                 interface = Float32[]) # Add the other models
+                 interface = Float32[], interface_long = Float32[]) 
 ##
 for strain in unique(df.strain)
-    print(strain)
-    tf = filter(x->x.strain .== strain, df)
-    p = Array(filter(x->x.fit.=="48h" && x.strain .== strain, 
-                     pf)[:,3:5])
-    t, t_e, h, h_e = order_average(tf)
     sf = DataFrame()
+    print(strain)
+    # Get average values
+    tf = filter(x->x.strain .== strain, df)
+    t, t_e, h, h_e = order_average(tf)
     sf.strain = repeat([strain], length(t))
     sf.time = t 
     sf.time_error = t_e 
     sf.avg_height = h 
     sf.std_height = h_e
+    sf.interface_long = zeros(length(t)) .+= NaN
+    # Get 48h fits
+    p = Array(filter(x->x.fit.=="48h" && x.strain .== strain, 
+                     pf)[:,3:5])
     problem = ODEProblem(interface, [0.1], (0.0, t[end]), p)
     sol = solve(problem, saveat=t, save_idxs=1)
     sf.interface = sol.u
-    global Data = vcat(Data, sf)
+
+    ## Get all fits
+    if strain in longtime_list
+        p = Array(filter(x->x.fit.=="long" && x.strain .== strain, 
+                        pf)[:,3:5])
+        problem = ODEProblem(interface, [0.1], (0.0, t[end]), p)
+        sol = solve(problem, saveat=t, save_idxs=1)
+        sf.interface_long = sol.u
+    end
+    append!(Data, sf)
 end
 ##
 CSV.write("data/timelapses/model_predictions.csv", Data)
+##
+using Plots, StatsPlots
+@df Data[Data.strain .== "ea387",:] plot(:time, [:interface, :interface_long])

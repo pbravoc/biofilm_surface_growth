@@ -50,23 +50,19 @@ function boot_fit(df, n)
     end
     return reduce(hcat, p_bootstrap)'
 end
-##
+## This is to do bootstrap fitting on 48h data
 strain_name = "ea387"
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.strain .== strain_name && x.time .< 48 &&
                 x.replicate in ["A", "B", "C"] &&
                 x.avg_height > 0 , Df)
-#@df df scatter(:time, :avg_height, group=(:replicate), legend=false, xlabel="Time [hr]",
-#               ylabel="Height [μm]", size=(500, 400))
 data = boot_fit(df, 1000)
-
-##
 parameters_frame = DataFrame("α"=>data[:,1], "β"=>data[:,2], "L"=>data[:,3])
 parameters_frame.h_max = parameters_frame.α .* parameters_frame.L ./ parameters_frame.β
 CSV.write("data/sims/bootstrap/boot_"*strain_name*".csv", parameters_frame)
 
 
-##
+## And to aggregate all the different strains on one file
 strain_names = ["bgt127", "jt305", "gob33", "y55", "bh1514", "ea387"]
 Data = DataFrame()
 for sname in strain_names
@@ -74,5 +70,22 @@ for sname in strain_names
     df.strain = repeat([sname], 1000)
     append!(Data, df)
 end
-##
 CSV.write("data/sims/bootstrap/all_bootstrap.csv", Data)
+
+## This is to get the 'long time' best fit.
+strain_list = ["bgt127", "gob33", "jt305"]
+Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
+df = filter(x-> x.strain in strain_list && x.time .< 48 &&
+                x.replicate in ["A", "B", "C"] &&
+                x.avg_height > 0 , Df)
+df2 = DataFrame(CSV.File("data/timelapses/longtime_data.csv"))
+params = []
+for strain in strain_list 
+    tf = filter(x-> x.strain .== strain, df)
+    tf2 = filter(x-> x.strain .== strain, df2)
+    t = append!(tf.time, tf2.time)
+    h = append!(tf.avg_height, tf2.avg_height)
+    p = fit_data(t, h)
+    append!(params, [p])
+    print(strain)
+end
