@@ -18,15 +18,42 @@ function block_bootstrap(df, n_blocks, block_size)
     return df[si,:]  
 end
 G(z, zstar) = z < zstar ? z : zstar 
-
+function nutrient_n(du, u , p, t)
+    h, c = u
+    α, β, K_c, ϵ = p         
+    du[1] = α*h*(c/(K_c + c)) - β*h 
+    du[2] = -ϵ*(c/(K_c + c)) 
+    return du 
+end
+function logistic_n(du, u , p, t)
+    h, c = u
+    α, K_h, K_c, ϵ = p         
+    du[1] = α*h*(1- h/(K_h))*(c/(K_c + c)) 
+    du[2] = -ϵ*(c/(K_c + c)) 
+    return du 
+end
+function logistic(du, u , p, t)
+    h = u[1]
+    α, K_h = p  
+    #du[1] = α * h - (α*h*h/K_h + h)
+    du[1] = α*h*(1- h/(K_h))
+    #du[1] = α * h *(1- (h/(K_h + h)))
+    return du 
+end
+function interface_n(du, u, p, t)
+    h, c = u 
+    α, β, hstar, K_c, ϵ = p
+    du[1] = α*G.(h, hstar)*(c/(K_c + c)) - β*h 
+    du[2] = -ϵ*(c/(K_c + c)) 
+    return du
+end
 function interface(du, u, p, t)
     h = u[1] 
     α, β, hstar = p
     du[1] = α*G.(h, hstar) - β*h 
     return du
 end
-
-function fit_data(t_data, h_data, model, pguess=[0.8, 0.05, 15.0]) # [0.8, 100]
+function fit_data(t_data, h_data, model, pguess=[0.8, 100])# pguess=[0.8, 0.05, 15.0]) # 
     idxs = sortperm(t_data)  # Sort time indexes
     t_data, h_data = t_data[idxs], h_data[idxs]
     u0 = [0.1]
@@ -41,18 +68,13 @@ function fit_data(t_data, h_data, model, pguess=[0.8, 0.05, 15.0]) # [0.8, 100]
     return result_ode
 end 
 
-function logistic(du, u , p, t)
-    h = u[1]
-    α, K_h = p  
-    du[1] = α*h*(1- h/(K_h))
-    return du 
-end
 ##
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 Df = filter(x-> x.avg_height .> 0, Df)                    # Smaller than 0 values don't make physical sense
+df2 = DataFrame(CSV.File("data/timelapses/longtime_data.csv"))
 strain_list = unique(Df.strain)
 model_choice, n_parameters = logistic, 2
-model_choice, n_parameters = interface, 3
+#model_choice, n_parameters = interface, 3
 P = []
 Strain = []
 Fit = []
@@ -80,18 +102,14 @@ for strain in strain_list
 end
 # This is to get the 'long time' best fit.
 strain_list = ["bgt127", "gob33", "jt305"]
-Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.strain in strain_list && x.time .< 48 &&
-                x.replicate in ["A", "B", "C"] &&
-                x.avg_height > 0 , Df)
-df2 = DataFrame(CSV.File("data/timelapses/longtime_data.csv"))
+                x.replicate in ["A", "B", "C"], Df)
 for strain in strain_list 
     tf = filter(x-> x.strain .== strain, df)
     tf2 = filter(x-> x.strain .== strain, df2)
     t = append!(tf.time, tf2.time)
     h = append!(tf.avg_height, tf2.avg_height)
-    scatter(t, h)
-    p = fit_data(t, h, interface)
+    p = fit_data(t, h, model_choice)
     append!(P, [p.u])
     append!(Strain, [strain])
     append!(Fit, ["long"])
@@ -103,3 +121,5 @@ pf = hcat(DataFrame("strain"=>Strain, "fit"=>Fit),
 CSV.write("data/timelapses/fit_params_"*string(model_choice)*".csv", pf)
 
  
+##
+P

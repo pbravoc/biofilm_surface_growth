@@ -94,8 +94,8 @@ plot!(xlim=(-1, 220.0), ylim=(-0.1, 13.0), legend=false)
 #savefig("figs/figs_temp/fig3_c.svg")
 
 l = @layout [
-    a{0.5w} [b{0.5h}  
+    a{0.6w} [b{0.5h}  
              c{0.5h}] 
 ]
-plot(p1, p2, p3, size=(900, 350), layout=l, bottom_margin=4mm, left_margin=3mm, grid=false)
-savefig("figs/fig3/fig3.pdf")
+plot(p1, p2, p3, size=(700, 350), layout=l, bottom_margin=4mm, left_margin=3mm, grid=false)
+savefig("figs/fig3/fig3.svg")

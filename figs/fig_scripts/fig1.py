@@ -124,7 +124,8 @@ t = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/data/t
 xs = (np.arange(data.shape[1]) - data.shape[1]/2)*0.173
 
 #%%
-my_cmap = 'viridis'
+my_cmap = 'inferno'
+my_cmap2 = 'viridis_r'
 fig = plt.figure(figsize=(12, 7), constrained_layout=True)
 spec = fig.add_gridspec(ncols=1, nrows=4, height_ratios=[1, 1, 1, 3])
 
@@ -137,9 +138,10 @@ plt.text(0.01, 0.75, 'A', horizontalalignment='center', fontsize=18,
 
 ax2 = plt.subplot(spec[1])
 plt.axis('off')
-ax2.imshow(new_img/1000, cmap=my_cmap, interpolation="none")
+ax2.imshow(new_img/1000, cmap=my_cmap, vmin=-0.3,vmax=4,interpolation="none")
 ax2.set_aspect('equal')
-norm = plt.Normalize(vmin=np.nanmin(new_img/1000), vmax=np.nanmax(new_img/1000))
+#norm = plt.Normalize(vmin=np.nanmin(new_img/1000), vmax=np.nanmax(new_img/1000))
+norm = plt.Normalize(vmin=-0.2, vmax=4)
 sm = plt.cm.ScalarMappable(cmap=my_cmap, norm=norm)
 cbar = plt.colorbar(sm, aspect=5, shrink = 0.7)
 cbar.ax.tick_params(labelsize=14) 
@@ -164,12 +166,12 @@ plt.xticks(fontsize=14)
 plt.yticks(fontsize=14)
 ax4 = plt.subplot(spec[3])
 norm = plt.Normalize(vmin=0, vmax=t[-1])
-sm = plt.cm.ScalarMappable(cmap=my_cmap, norm=norm)
+sm = plt.cm.ScalarMappable(cmap=my_cmap2, norm=norm)
 cbar = plt.colorbar(sm)
 cbar.ax.tick_params(labelsize=14) 
 cbar.ax.set_ylabel('Time [hr]', rotation=90, fontsize=14)
 cbar.set_ticks([0, 4, 8, 12, 16, 20, 24])
-cmap = plt.cm.ScalarMappable(norm=norm, cmap=my_cmap)
+cmap = plt.cm.ScalarMappable(norm=norm, cmap=my_cmap2)
 cmap.set_array([])
 my_colors = [cmap.to_rgba(j) for j in t]
 for i in range(1, data.shape[0]):
