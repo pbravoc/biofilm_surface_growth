@@ -10,7 +10,8 @@ TODO:
 =#
 using DataFrames, CSV
 using Statistics, NaNMath
-using Plots, StatsPlots, ColorSchemes, Colors
+using Plots, StatsPlots, Plots.Measures
+using ColorSchemes, Colors
 
 my_colors = [ColorSchemes.okabe_ito[8], ColorSchemes.okabe_ito[5],
              ColorSchemes.okabe_ito[4], ColorSchemes.okabe_ito[6]]
@@ -34,28 +35,29 @@ for strain in strain_list
     qtf.strain = repeat([strain], size(tf)[1])
     append!(qf, qtf)
 end
+alpha_intensity = 0.1
 p1 = plot()
 
 strain, myc = "bgt127", my_colors[2]
-@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=0.3, alpha=0.0, label=false)
+@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=alpha_intensity, alpha=0.0, label=false)
 
 strain, myc = "jt305", my_colors[3]
-@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=0.2, alpha=0.0, label=false)
+@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=alpha_intensity, alpha=0.0, label=false)
 
 
 strain, myc = "gob33", my_colors[4]
-@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=0.2, alpha=0.0, label=false)
+@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=alpha_intensity, alpha=0.0, label=false)
 
-@df df_pred[df_pred.strain .== "bgt127", :] plot!(:time, :tall, color=my_colors[2], linewidth=2, label=false)
-@df df_pred[df_pred.strain .== "jt305", :] plot!(:time, :tall, color=my_colors[3], linewidth=2, label=false)
-@df df_pred[df_pred.strain .== "gob33", :] plot!(:time, :tall, color=my_colors[4], linewidth=2, label=false)
+@df df_pred[df_pred.strain .== "bgt127", :] plot!(:time, :tall, color=my_colors[2], linewidth=3, label=false)
+@df df_pred[df_pred.strain .== "jt305", :] plot!(:time, :tall, color=my_colors[3], linewidth=3, label=false)
+@df df_pred[df_pred.strain .== "gob33", :] plot!(:time, :tall, color=my_colors[4], linewidth=3, label=false)
 
-@df df_long[df_long.strain .== "bgt127",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[2],markersize=3, marker=:diamond, label="E coli")
-@df df_long[df_long.strain .== "jt305",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[3], markersize=3, label="Aeromonas")
+@df df_long[df_long.strain .== "bgt127",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[2],markersize=3, marker=:diamond, label="Aeromonas")
+@df df_long[df_long.strain .== "jt305",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[3], markersize=3, label="E coli")
 @df df_long[df_long.strain .== "gob33",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[4],markersize=3, marker=:square,label="Yeast (aa)")
 
 plot!(xlabel="Time [hr]", ylabel="Residual [μm]", legend=:topleft, grid=false)
-##
+
 pf_log = DataFrame(CSV.File("data/timelapses/fit_params_logistic.csv"))
 pf_int = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
 P = zeros(4,3)
@@ -91,7 +93,6 @@ R = R'
 P_dif = abs.(P .- h_ref)
 myc = [ColorSchemes.okabe_ito[1], ColorSchemes.okabe_ito[1],
        ColorSchemes.okabe_ito[2], ColorSchemes.okabe_ito[2]]
-##
 p2 = plot()
 scatter!(R[1,:], P_dif[1,:], color=myc, marker=:circle, alpha=[1.0, 0.5, 1.0, 0.5], label=false)
 scatter!(R[2,:], P_dif[2,:], color=myc, marker=:diamond, alpha=[1.0, 0.5, 1.0, 0.5], label=false)
@@ -101,18 +102,7 @@ scatter!([-100], [-100], marker=:circle, color=myc[3], label="Logistic")
 plot!(xlim=(1, 1e2), ylim=(2, 1e3))
 plot!(xlabel="RMSE", ylabel="Max(h) error", size=(400, 400), dpi=500)
 plot!(xscale=:log, yscale=:log)
-##
-groupedbar(["Aeromonas", "E coli", "Yeast (aa)"], 
-           P_rel, bar_position = :dodge, color=myc', 
-           label=["Int_long" "Int_48" "Log_long" "Log_48"],
-           alpha=[1.0, 0.5, 1.0, 0.5]', bar_width=0.7,
-           ylabel="Height % error [μm]", legend=:topleft)
-
-#plot!([0.1, 0.9], [h_bgt127, h_bgt127], color=:black, linestyle=:dash, label=false)
-#plot!([1.1, 1.9], [h_jt305, h_jt305], color=:black, linestyle=:dash, label=false)
-#plot!([2.1, 2.9], [h_gob33, h_gob33], color=:black, linestyle=:dash, label=false)
-plot!(size=(400, 200), dpi=500)
-#savefig("figs/fig5/finalheight_temp_rel.png")
+#
 
 strain = "bgt127"
 tf = df_48[df_48.strain .== strain, :]
@@ -136,11 +126,38 @@ p5 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray
 plot!(yticks=[-10, 10], legend=false)
 
 l = @layout [
-    a{0.65w} [b{0.75h}  
+    a{0.65w} [b{0.8h}  
              c{0.05h}
              d{0.05h}
              e{0.05h}] 
 ]
 plot(p1, p2, p3, p4, p5, layout=l, size=(700, 350), bottom_margin=3mm, left_margin=3mm)
-savefig("figs/fig4/fig4_mix.svg")
+#savefig("figs/fig4/fig4_mix.svg")
 ##
+df = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
+tf = df[df.strain .== "bgt127", :]
+p6 = @df tf density(sort(tf.α)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "jt305", :]
+@df tf density!(sort(tf.α)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "gob33", :]
+@df tf density!(sort(tf.α)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "bgt127", :]
+p7 = @df tf density(sort(tf.β)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "jt305", :]
+@df tf density!(sort(tf.β)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "gob33", :]
+@df tf density!(sort(tf.β)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "bgt127", :]
+p8 = @df tf density(sort(tf.L)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "jt305", :]
+@df tf density!(sort(tf.L)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "gob33", :]
+@df tf density!(sort(tf.L)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
+plot(p6, p7, p8, legend=false, grid=false, layout=(1,3), size=(500, 100), xticks=false, yticks=false)
+##
+tf = df[df.strain .== "bgt127", :]
+p6 = @df tf density(sort(tf.h_max)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "jt305", :]
+@df tf density!(sort(tf.h_max)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
+tf = df[df.strain .== "gob33", :]
+@df tf density!(sort(tf.h_max)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)

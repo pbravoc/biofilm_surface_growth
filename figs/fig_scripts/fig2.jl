@@ -1,4 +1,4 @@
-using DataFrames, CSV
+using DataFrames, CSV, NPZ
 using Statistics, NaNMath
 using Plots, StatsPlots, ColorSchemes, Plots.Measures
 using SpecialFunctions
@@ -27,39 +27,39 @@ a = int_c(0.1)
 sol_dis = cumsum(c(x, dt)) .- 1
 sol_ana = int_c.(x)
 sol_dis = G.(x, sqrt(D*dt))
-##
-my_colors = [colorant"#33A5E5", colorant"#0072B2", colorant"#003F7F"]'
-l = @layout [[a{0.7h}
-              b{0.3h}] [c{0.7h}
-                        d{0.3h}]]
-
+#
+my_colors = [colorant"#B3B3B3", colorant"#808080", colorant"#4D4D4D"]'
+#
 p1 = @df df plot(:time, :avg_height, group=:replicate,
                 fillalpha=0.3, ylabel="Height [μm]", xlabel="Time [hr]",
                 alpha=1.0,  grid=false, 
                 legend=:topleft, color=my_colors,
                 marker=:circle, markersize=2.5, markerstrokecolor=:auto,
                 linewidth=1)
-p1 = hline!([27.5], color=:black, linestyle=:dash, legend=false)
-p1 = annotate!(10, 20, text("I", 8, "courier"))
-p1 = annotate!(10, 35, text("II", 8, "courier"))
+p1 = hline!([27.5], color=ColorSchemes.okabe_ito[1], linestyle=:dash, linewidth=3, legend=false)
+p1 = annotate!(10, 17, text("I", 8, "courier", :left))
+p1 = annotate!(10, 38, text("II", 8, "courier", :left))
+annotate!(2, 205, "A")
 @df df plot!(:time, :smooth_height, group=:replicate,
              alpha=0.8, legend=false, 
              grid=false, color=my_colors,
              marker=:circle, markersize=1, markerstrokecolor=:auto,
              inset = (1, bbox(0.5, 0.45, 0.5, 0.45)), subplot=2,
              linewidth=1.5,yscale=:log10)
-
 ##
+             #
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false, color=my_colors,
             marker=:circle, markersize=3, markerstrokecolor=:auto,
             xlabel="Height [μm]", ylabel="Δ Height [μm/hr]",
             linewidth=2)
-p2 = vline!([27.5], color=:black, linestyle=:dash, legend=false)
+p2 = vline!([27.5], color=ColorSchemes.okabe_ito[1], linewidth=3,linestyle=:dash, legend=false)
 p2 = annotate!(20, 1, text("I", 8, "courier"))
 p2 = annotate!(40, 1, text("II", 8, "courier"))
-## supp1
+annotate!(5, 12, "B")
+
+#= supp1
 @df df plot(:time, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false,
@@ -72,31 +72,51 @@ annotate!(6.5, 1, text("I", 8, "courier"))
 annotate!(9, 1, text("II", 8, "courier"))
 plot!(size=(500, 400))
 savefig("figs/fig2/2_supp1.svg")
+=#
+#
+nr_profiles = npzread("data/timelapses/columns/profiles_nr.npy")
+nr_heights = [NaNMath.mean(nr_profiles[i,:4000:6000]) for i=1:36]
+nr_heights = reshape(nr_heights, (3,12))
+r_profiles = npzread("data/timelapses/columns/profiles_r.npy")
+r_heights = [NaNMath.mean(r_profiles[i,:2500:4500]) for i=1:36]
+r_heights = reshape(r_heights, (3,12))
+p3 = plot(nr_heights, color=1, marker=:circle)
+plot!(r_heights, color=2, marker=:diamond)
+plot!(legend=false)
+nr_h, nr_e = mean(nr_heights, dims=2), std(nr_heights, dims=2)
+r_h, r_e = mean(r_heights, dims=2), std(r_heights, dims=2)
+p3 = plot([nr_h, r_h], yerror=[nr_e r_e], marker=[:circle :diamond], markersize=5,  linewidth=3,color=[:gray ColorSchemes.okabe_ito[1]],
+          label=["NR" "R"])
+plot!(legend=(0.15, 0.25), ylim=(0, 320), xticks=[1,2,3], xlabel="Iteration", ylabel="Height [μm]")
+annotate!(1.15, 300, "C")
 
-##
-p3 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:black, linewidth=2, label="Concentration", size=(400, 400), xlim=(0,2))
-p3 = plot!(x, sol_ana ./ maximum(sol_ana), color=my_colors[2], linewidth=2, label="Cumulative", xlim=(0,2))
-p3 = plot!(x, sol_dis ./ maximum(sol_dis), color=my_colors[2],  linewidth=2,linestyle=:dash,label="Approximation")
-p3 = vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, )
-p3 = xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200))
+total_nr, total_r = maximum(nr_heights, dims=1), sum(r_heights, dims=1)
+#=
+bar!([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], label=false,
+     inset = (1, bbox(0.15, 0.6, 0.15, 0.35)),subplot=2, title="Tot. growth [μm]", color=[:gray, ColorSchemes.okabe_ito[1]],
+     titlefontsize=8, xticks=[], yticks=[0, 250, 500])
+=#
+p4 = bar([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], 
+         label=false, xticks=([1,2], ["NR", "R"]), color=[:gray, ColorSchemes.okabe_ito[1]], 
+         yticks=[], ylabel="Total Height [μm]")
+annotate!(0.94, 505, "D")
+annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90))
+annotate!(2, 105, text("462.1 μm", 6, "courier", :left, rotation=90))
+
+#
+#
+p5 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:gray, linewidth=3, label="Concentration", size=(400, 400), xlim=(0,2))
+plot!(x, sol_ana ./ maximum(sol_ana), color=ColorSchemes.okabe_ito[1], linewidth=3, label="Cumulative", xlim=(0,2))
+plot!(x, sol_dis ./ maximum(sol_dis), color=ColorSchemes.okabe_ito[1],  linewidth=3,linestyle=:dash,label="Approximation")
+vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, )
+xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200), yticks=[])
+annotate!(0.12, 0.96, "E")
+
+#
 #savefig("figs/fig2/2_conconly.svg")
-##
-
-cube_data = [161.07 102.99 108.80
-             179.58 92.46 92.48
-             182.84 96.82 127.31
-             232.57 101.17 73.23
-             183.57 83.39 81.21
-             166.51 79.03 59.80
-             161.07 89.92 64.51
-             200.99 108.07 NaN
-             248.18 82.66 NaN]
-cube_sorted = [248.18 232.57 200.99 183.57 182.84 179.58 166.51 161.07 161.07
-              108.07 102.99 101.17 96.82 92.46 89.92 83.39 82.66 79.03
-              127.31 108.8 92.48 81.21 73.23 64.51 59.8 NaN NaN]
-
-p4 = groupedbar(cube_sorted, color=ColorSchemes.okabe_ito[5], label=false, grid=false, xticks=[1,2,3], ylim=(0, 280), xlabel="Iteration", ylabel="Max. Height [μm]")
-
-plot(p1, p3, p2, p4,layout=l, size=(700, 450), dpi=300)
-savefig("figs/fig2/fig2.pdf")
+l = @layout [[a{0.6h}
+              b{0.7w} c{0.3w}] [d{0.6h}
+                        e{0.4h}]]
+plot(p1, p3, p4, p2, p5, layout=l, size=(700, 450), dpi=300)
+savefig("figs/fig2/fig2.svg")
 ##
