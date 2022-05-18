@@ -51,19 +51,20 @@ function boot_fit(df, n)
     return reduce(hcat, p_bootstrap)'
 end
 ## This is to do bootstrap fitting on 48h data
-strain_name = "ea387"
+strain_name = "sw519"
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.strain .== strain_name && x.time .< 48 &&
                 x.replicate in ["A", "B", "C"] &&
                 x.avg_height > 0 , Df)
+##
 data = boot_fit(df, 1000)
 parameters_frame = DataFrame("α"=>data[:,1], "β"=>data[:,2], "L"=>data[:,3])
 parameters_frame.h_max = parameters_frame.α .* parameters_frame.L ./ parameters_frame.β
 CSV.write("data/sims/bootstrap/boot_"*strain_name*".csv", parameters_frame)
-
+##
 
 ## And to aggregate all the different strains on one file
-strain_names = ["bgt127", "jt305", "gob33", "y55", "bh1514", "ea387"]
+strain_names = ["bgt127", "jt305", "gob33", "y55", "bh1514", "ea387", "cc117", "sw520", "sw519"]
 Data = DataFrame()
 for sname in strain_names
     df = DataFrame(CSV.File("data/sims/bootstrap/boot_"*sname*".csv"))
