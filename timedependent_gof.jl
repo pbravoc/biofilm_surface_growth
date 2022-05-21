@@ -1,45 +1,27 @@
+#=
+Here we explore how the fits change depending on the amount of data. 
+The main subject of study is JT305, since we managed to obtain 88 hours
+of timelapse data across 3 replicates. 
+
+From times 40h to 88h, we calculate the best fits and also 1000
+bootstrapped parameters to obtain Confidence intervals (CI).
+
+The data suggests that β is the last parameter to 'narrow down'
+and therefore h_max will be imprecise until this converges.
+=#
 using DataFrames, CSV, CircularArrays
 using Statistics, NaNMath, StatsBase
 using DifferentialEquations, DiffEqFlux
 using Plots, StatsPlots 
 
 G(z, zstar) = z < zstar ? z : zstar 
-function nutrient_n(du, u , p, t)
-    h, c = u
-    α, β, K_c, ϵ = p         
-    du[1] = α*h*(c/(K_c + c)) - β*h 
-    du[2] = -ϵ*(c/(K_c + c)) 
-    return du 
-end
-function logistic_n(du, u , p, t)
-    h, c = u
-    α, K_h, K_c, ϵ = p         
-    du[1] = α*h*(1- h/(K_h))*(c/(K_c + c)) 
-    du[2] = -ϵ*(c/(K_c + c)) 
-    return du 
-end
-function logistic(du, u , p, t)
-    h = u[1]
-    α, K_h = p  
-    #du[1] = α * h - (α*h*h/K_h + h)
-    du[1] = α*h*(1- h/(K_h))
-    #du[1] = α * h *(1- (h/(K_h + h)))
-    return du 
-end
-function interface_n(du, u, p, t)
-    h, c = u 
-    α, β, hstar, K_c, ϵ = p
-    du[1] = α*G.(h, hstar)*(c/(K_c + c)) - β*h 
-    du[2] = -ϵ*(c/(K_c + c)) 
-    return du
-end
 function interface(du, u, p, t)
     h = u[1] 
     α, β, hstar = p
     du[1] = α*G.(h, hstar) - β*h 
     return du
 end
-function fit_data(t_data, h_data, model, pguess=[0.8, 0.1, 15.0])
+function fit_data(t_data, h_data, model=interface, pguess=[0.8, 0.1, 15.0])
     idxs = sortperm(t_data)  # Sort time indexes
     t_data, h_data = t_data[idxs], h_data[idxs]
     u0 = [0.1]
@@ -50,62 +32,53 @@ function fit_data(t_data, h_data, model, pguess=[0.8, 0.1, 15.0])
         loss = sum(abs2, sol_array .- h_data)
         return loss, sol
     end 
-    result_ode = DiffEqFlux.sciml_train(loss, pguess,
-                        lower_bounds = [0.1, 50.0],
-                        upper_bounds = [5.0, 500.0])
+    result_ode = DiffEqFlux.sciml_train(loss, pguess, maxiters=500,
+                                        lower_bounds = [1e-3, 1e-4, 1],
+                                        upper_bounds = [1e1, 1, 1e2])
     return result_ode
 end 
-##
-df =  DataFrame(CSV.File("data/timelapses/database.csv"))
-df = filter(x-> x.strain .== "bgt127" && x.time .< 48 &&
-                x.replicate in ["A", "B", "C"], df)
-##
-plot()
-for i=1:20
-    @df df[[i, 100+i, 199+i], :] scatter!(:time, :avg_height, color=:black, label=false, alpha=0.2)
-    plot!(xlim=(0.0, 48.0), ylim=(-1, 220.0), xlabel="Time [hr]", ylabel="Height [μm]")
+function block_bootstrap(df, n_blocks, block_size)
+    indices = CircularArray(1:size(df)[1]-1)
+    sample_start = sample(indices, n_blocks)
+    sample_temp = reduce(vcat, 
+                    [Array(x:x+block_size-1) for x in sample_start])
+    si = [(x % size(df)[1])+1 for x in sample_temp]
+    return df[si,:]  
 end
-anim = @animate for i=21:98
-    @df df[[i, 100+i, 199+i], :] scatter!(:time, :avg_height, color=:black, label=false, alpha=0.2)
-end
-gif(anim, "figs/animations/growth_gif.gif", fps = 10)
-##
-df_reference = filter(x-> x.replicate in ["C"], df)
-my_pars2 = []
-for i=25:98
-    tf = filter(x-> x.time .<= df_reference.time[i], df)
-    fit_pars = fit_data(tf.time, tf.avg_height, logistic, [0.1, 200.0])
-    #fit_pars = fit_data(tf.time, tf.avg_height, interface)
-    print(fit_pars)
-    append!(my_pars2, [fit_pars])
-end
-##
-s = 5
-anim = @animate for i=s:length(my_pars)
-    t_end = df_reference.time[25+i]
-    tf = filter(x-> x.time .<= t_end, df)
-    @df tf scatter(:time, :avg_height, color=:black, label=false, alpha=0.2, xlim=(-0.5, 48.0), ylim=(0.0, 220.0))
-    prob = ODEProblem(interface, [0.1], (0.0, 48.0), my_pars[i])
-    sol = solve(prob, saveat=0.5, save_idxs=1)
-    idxs = sol.t .<= t_end
-    idxs2 = sol.t .> t_end
-    #plot!(sol.t[idxs], sol.u[idxs], color=:red, label=false, title=i,linewidth=2)
-    #plot!(sol.t[idxs2], sol.u[idxs2], color=:red, label=false, linestyle=:dash, linewidth=2)
-    prob = ODEProblem(logistic, [0.1], (0.0, 48.0), my_pars2[i])
-    sol = solve(prob, saveat=0.5, save_idxs=1)
-    plot!(sol.t[idxs], sol.u[idxs], color=:blue, label=false, title=i, linewidth=2)
-    plot!(sol.t[idxs2], sol.u[idxs2], color=:blue, label=false, linestyle=:dash, linewidth=2)
-    plot!(xlabel="Time [hr]", ylabel="Height[μm]", title=string(round(t_end, digits=1))*" hours", size=(500, 400), dpi=500)
+function boot_fit(df, n)
+    p_bootstrap = []
+    n_boots = Int(floor(length(df.time)/(3*5)))
+    while length(p_bootstrap) < n
+        Threads.@threads for i=1:n-length(p_bootstrap)
+            boot_df = block_bootstrap(df, n_boots, 5)
+            try
+                myfit = fit_data(boot_df.time, boot_df.avg_height)
+                append!(p_bootstrap, [myfit.u])
+            catch
+            end
+        end
     end
-gif(anim, "figs/animations/growth_logistic_fit.gif", fps = 10)
+    return reduce(hcat, p_bootstrap)'
+end
+df =  DataFrame(CSV.File("data/timelapses/database.csv"))
+df = filter(x-> x.strain .== "jt305" && x.replicate in ["A", "B", "C"], df)
+time_reference = filter(x-> x.replicate in ["C"], df).time
 ##
-tf = filter(x-> x.time .<= df_reference.time[30], df)
-@df tf scatter(:time, :avg_height, color=:black, label=false, alpha=0.2)
-prob = ODEProblem(logistic, [0.1], (0.0, 48.0), my_pars2[5])
-sol = solve(prob, saveat=0.1)
-#plot!(sol, color=:blue, label=false, title=30, linewidth=2)
-prob = ODEProblem(interface, [0.1], (0.0, 11.0), my_pars[5])
-sol = solve(prob, saveat=0.1)
-#plot!(sol, color=:red, label=false, title=i, linewidth=2)
-plot!(xlabel="Time [hr]", ylabel="Height[μm]", title="Early times", size=(500, 400), xlim=(-0.5, 10.5), ylim=(-0.5, 58.0))
-#savefig("figs/animations/pre_growth0.svg")
+my_df = DataFrame("α"=>Float32[], "β"=>Float32[], "L"=>Float32[], "id"=>String[],
+                  "time"=>Float32[], "h_sample"=>Float32[], "strain"=>String[])
+n = 1000
+for i=74:128
+    println(i)
+    tf = filter(x-> x.time .<= time_reference[i], df)
+    best_fit = fit_data(tf.time, tf.avg_height).u
+    boot_params = boot_fit(tf, n)
+    id_names = lpad.(Array(1:n),3,"0")
+    boot_data = vcat([best_fit ... "best"], hcat(boot_params, id_names))
+    time_list = repeat([maximum(tf.time)], n+1)
+    height_list = repeat([maximum(tf.avg_height)], n+1)
+    strain_list = repeat(["jt305"], n+1)
+    boot_data = [boot_data time_list height_list strain_list]
+    [push!(my_df, boot_data[i,:]) for i=1:size(boot_data)[1]]
+end
+##
+CSV.write("data/sims/bootstrap/time_jt305.csv", my_df)

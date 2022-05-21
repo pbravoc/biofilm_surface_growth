@@ -20,9 +20,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      showgrid="false"
-     inkscape:zoom="1.0721152"
-     inkscape:cx="374.02696"
-     inkscape:cy="242.51125"
+     inkscape:zoom="2.4320783"
+     inkscape:cx="360.59694"
+     inkscape:cy="115.53904"
      inkscape:window-width="1920"
      inkscape:window-height="1008"
      inkscape:window-x="1920"
@@ -41,13 +41,6 @@
          id="rect2" />
     </clipPath>
   </defs>
-  <path
-     clip-path="url(#clip700)"
-     d=" M0 1800 L2800 1800 L2800 -2.27374e-13 L0 -2.27374e-13  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path7" />
   <defs
      id="defs12">
     <clipPath
@@ -60,13 +53,6 @@
          id="rect9" />
     </clipPath>
   </defs>
-  <path
-     clip-path="url(#clip700)"
-     d=" M236.428 859.485 L1368.7 859.485 L1368.7 47.2441 L236.428 47.2441  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path14" />
   <defs
      id="defs19">
     <clipPath
@@ -3430,13 +3416,6 @@
      fill-rule="evenodd"
      fill-opacity="1"
      id="path733" />
-  <path
-     clip-path="url(#clip700)"
-     d=" M802.567 778.261 L1368.7 778.261 L1368.7 412.752 L802.567 412.752  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path735" />
   <defs
      id="defs740">
     <clipPath
@@ -6584,13 +6563,6 @@
      fill-opacity="0.8"
      stroke="none"
      id="circle1388" />
-  <path
-     clip-path="url(#clip700)"
-     d=" M236.428 1624.11 L919.781 1624.11 L919.781 1082.62 L236.428 1082.62  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path1390" />
   <defs
      id="defs1395">
     <clipPath
@@ -6603,21 +6575,6 @@
          id="rect1392" />
     </clipPath>
   </defs>
-  <polyline
-     clip-path="url(#clip704)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   255.768,1624.11 255.768,1082.62    "
-     id="polyline1397" />
-  <polyline
-     clip-path="url(#clip704)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   578.104,1624.11 578.104,1082.62    "
-     id="polyline1399" />
-  <polyline
-     clip-path="url(#clip704)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   900.44,1624.11 900.44,1082.62    "
-     id="polyline1401" />
   <polyline
      clip-path="url(#clip700)"
      style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none"
@@ -6727,21 +6684,6 @@
      style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
      points="   236.428,1624.11 919.781,1624.11    "
      id="polyline1435" />
-  <polyline
-     clip-path="url(#clip704)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   236.428,1454.89 919.781,1454.89    "
-     id="polyline1437" />
-  <polyline
-     clip-path="url(#clip704)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   236.428,1285.68 919.781,1285.68    "
-     id="polyline1439" />
-  <polyline
-     clip-path="url(#clip704)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   236.428,1116.46 919.781,1116.46    "
-     id="polyline1441" />
   <polyline
      clip-path="url(#clip700)"
      style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:4; stroke-opacity:1; fill:none"
@@ -7181,13 +7123,6 @@
      fill-rule="evenodd"
      fill-opacity="1"
      id="path1563" />
-  <path
-     clip-path="url(#clip700)"
-     d=" M1075.84 1624.11 L1368.7 1624.11 L1368.7 1082.62 L1075.84 1082.62  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path1565" />
   <defs
      id="defs1570">
     <clipPath
@@ -7200,11 +7135,6 @@
          id="rect1567" />
     </clipPath>
   </defs>
-  <polyline
-     clip-path="url(#clip705)"
-     style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
-     points="   1149.87,1624.11 1149.87,1082.62    "
-     id="polyline1572" />
   <polyline
      clip-path="url(#clip705)"
      style="stroke:#000000; stroke-linecap:butt; stroke-linejoin:round; stroke-width:2; stroke-opacity:0.1; fill:none"
@@ -7478,13 +7408,6 @@
        y="1507.95"
        id="text1650">462.1 μm</text>
   </g>
-  <path
-     clip-path="url(#clip700)"
-     d=" M1620.48 859.485 L2752.76 859.485 L2752.76 47.2441 L1620.48 47.2441  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path1654" />
   <defs
      id="defs1659">
     <clipPath
@@ -10921,13 +10844,6 @@
      fill-rule="evenodd"
      fill-opacity="1"
      id="path2395" />
-  <path
-     clip-path="url(#clip700)"
-     d=" M1620.48 1624.11 L2752.76 1624.11 L2752.76 1082.62 L1620.48 1082.62  Z   "
-     fill="#ffffff"
-     fill-rule="evenodd"
-     fill-opacity="1"
-     id="path2397" />
   <defs
      id="defs2402">
     <clipPath

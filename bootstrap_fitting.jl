@@ -30,7 +30,9 @@ function fit_data(t_data, h_data, pguess=[0.8, 0.1, 15.0])
         loss = sum(abs2, sol_array .- h_data)
         return loss, sol
     end 
-    result_ode = DiffEqFlux.sciml_train(loss, pguess)
+    result_ode = DiffEqFlux.sciml_train(loss, pguess,
+                                        lower_bounds = [1e-3, 1e-3, 1],
+                                        upper_bounds = [1e1, 1, 1e2])
     return result_ode
 end 
 

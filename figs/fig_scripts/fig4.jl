@@ -37,27 +37,79 @@ for strain in strain_list
 end
 alpha_intensity = 0.1
 p1 = plot()
+plot!(xlabel="Time [hr]", ylabel="Height [μm]", ylim=(0, 1060), legend=:topleft, grid=false)
 
-strain, myc = "bgt127", my_colors[2]
-@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=alpha_intensity, alpha=0.0, label=false)
+@df df_pred[df_pred.strain .== "bgt127", :] plot!(:time, [:tall, :t48], color=my_colors[2], linewidth=3, linestyle=[:solid :dash], label=false)
+@df df_pred[df_pred.strain .== "jt305", :] plot!(:time, [:tall, :t48], color=my_colors[3], linewidth=3, linestyle=[:solid :dash], label=false)
+@df df_pred[df_pred.strain .== "gob33", :] plot!(:time, [:tall, :t48], color=my_colors[4], linewidth=3, linestyle=[:solid :dash], label=false)
 
-strain, myc = "jt305", my_colors[3]
-@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=alpha_intensity, alpha=0.0, label=false)
+@df df_long[df_long.strain .== "bgt127",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[2],markersize=4, markerstrokewidth=1.5, label="Aeromonas")
+@df df_long[df_long.strain .== "jt305",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[3], markersize=4, markerstrokewidth=1.5,marker=:diamond, label="E coli")
+@df df_long[df_long.strain .== "gob33",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[4],markersize=4,markerstrokewidth=1.5, marker=:square,label="Yeast (aa)")
+##
+#
+boot_df = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
+boot_df = filter(x->x.strain in ["bgt127", "jt305", "gob33"], boot_df)
 
+p2 = @df boot_df[boot_df.strain.=="bgt127",:] boxplot(["Aeromonas"], :h_max, outliers=false, color=my_colors[2])
+@df boot_df[boot_df.strain.=="jt305",:] boxplot!(["E coli"], :h_max, outliers=false, color=my_colors[3])
+@df boot_df[boot_df.strain.=="gob33",:] boxplot!(["Yeast (aa)"], :h_max, outliers=false, color=my_colors[4])
+plot!(xrotation=45)
+#=tf = df_pred[df_pred.strain .== "bgt127", :]
+@df tf scatter!([0.5, 0.5], [tf.tall[end], tf.t48[end]], color=my_colors[2], markersize=[8, 5], markerstrokewidth=3)
+tf = df_pred[df_pred.strain .== "jt305", :]
+@df tf scatter!([1.9, 1.9], [tf.tall[end], tf.t48[end]], color=my_colors[3], markersize=[8, 5], markershape=:diamond, markerstrokewidth=3)
+tf = df_pred[df_pred.strain .== "gob33", :]
+@df tf scatter!([3.3, 3.3], [tf.tall[end], tf.t48[end]], color=my_colors[4], markersize=[8, 5], markershape=:square, markerstrokewidth=3)
+=#
+plot!(size=(200, 400), left_margin=5mm, legend=false, ylim=(0, 1060))
+l = @layout [
+    a{0.8w} b] 
+p_top = plot(p1, p2, layout=l, size=(500, 400), bottom_margin=8mm, left_margin=3mm, grid=false)
+p_top = plot(p1, size=(450, 400), bottom_margin=8mm, left_margin=3mm, grid=false, background_color=:transparent)
 
-strain, myc = "gob33", my_colors[4]
-@df qf[qf.strain .== strain, :] plot!(:time, :q025, fillrange=:q975, color=myc, fillalpha=alpha_intensity, alpha=0.0, label=false)
+savefig("figs/fig4/fig4_poster.svg")
 
-@df df_pred[df_pred.strain .== "bgt127", :] plot!(:time, :tall, color=my_colors[2], linewidth=3, label=false)
-@df df_pred[df_pred.strain .== "jt305", :] plot!(:time, :tall, color=my_colors[3], linewidth=3, label=false)
-@df df_pred[df_pred.strain .== "gob33", :] plot!(:time, :tall, color=my_colors[4], linewidth=3, label=false)
+##
 
-@df df_long[df_long.strain .== "bgt127",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[2],markersize=3, marker=:diamond, label="Aeromonas")
-@df df_long[df_long.strain .== "jt305",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[3], markersize=3, label="E coli")
-@df df_long[df_long.strain .== "gob33",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[4],markersize=3, marker=:square,label="Yeast (aa)")
+strain = "bgt127"
+tf = df_48[df_48.strain .== strain, :]
+p3 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
+@df tf plot!(:time, :interface-:avg_height, color=my_colors[2],linestyle=:dash, linewidth=2 )
+@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[2], linewidth=2 )
+plot!(yticks=[-10, 5], legend=false)
 
-plot!(xlabel="Time [hr]", ylabel="Residual [μm]", legend=:topleft, grid=false)
+strain = "jt305"
+tf = df_48[df_48.strain .== strain, :]
+p4 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
+@df tf plot!(:time, :interface-:avg_height, color=my_colors[3],linestyle=:dash, linewidth=2 )
+@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[3], linewidth=2 )
+plot!(yticks=[-6, 6], legend=false)
 
+strain = "gob33"
+tf = df_48[df_48.strain .== strain, :]
+p5 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
+@df tf plot!(:time, :interface-:avg_height, color=my_colors[4], linestyle=:dash, linewidth=2 )
+@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[4], linewidth=2 )
+plot!(yticks=[-10, 10], legend=false)
+
+p_bot = plot(p3, p4, p5, layout=(1,3), size=(700, 80), bottom_margin=3mm, left_margin=3mm)
+savefig("figs/fig4/fig4_bot.svg")
+
+#savefig("figs/fig4/fig4_mix.svg")
+
+##
+l = @layout [ a{0.7h} 
+    b]
+plot(p_top, p_bot, layout=l, size=(600, 300))
+##
+l = @layout [ [a b]{0.7h} 
+    grid(1,3)
+]
+
+plot(p1, p2, p3, p4, p5, layout=l, size=(700, 500), bottom_margin=3mm, left_margin=3mm)
+#savefig("figs/fig4/fig4_mix.svg")
+##
 pf_log = DataFrame(CSV.File("data/timelapses/fit_params_logistic.csv"))
 pf_int = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
 P = zeros(4,3)
@@ -102,62 +154,51 @@ scatter!([-100], [-100], marker=:circle, color=myc[3], label="Logistic")
 plot!(xlim=(1, 1e2), ylim=(2, 1e3))
 plot!(xlabel="RMSE", ylabel="Max(h) error", size=(400, 400), dpi=500)
 plot!(xscale=:log, yscale=:log)
-#
-
-strain = "bgt127"
-tf = df_48[df_48.strain .== strain, :]
-p3 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface-:avg_height, color=my_colors[2],linestyle=:dot, linewidth=2 )
-@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[2], linewidth=2 )
-plot!(yticks=[-10, 5], legend=false)
-
-strain = "jt305"
-tf = df_48[df_48.strain .== strain, :]
-p4 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface-:avg_height, color=my_colors[3],linestyle=:dot, linewidth=2 )
-@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[3], linewidth=2 )
-plot!(yticks=[-6, 6], legend=false)
-
-strain = "gob33"
-tf = df_48[df_48.strain .== strain, :]
-p5 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface-:avg_height, color=my_colors[4], linestyle=:dot, linewidth=2 )
-@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[4], linewidth=2 )
-plot!(yticks=[-10, 10], legend=false)
-
+##
 l = @layout [
-    a{0.65w} [b{0.8h}  
-             c{0.05h}
-             d{0.05h}
-             e{0.05h}] 
-]
-plot(p1, p2, p3, p4, p5, layout=l, size=(700, 350), bottom_margin=3mm, left_margin=3mm)
-#savefig("figs/fig4/fig4_mix.svg")
+    a{0.8w} b] 
+plot(p1, p2, layout=l, size=(700, 300), bottom_margin=5mm, grid=false)
 ##
-df = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
-tf = df[df.strain .== "bgt127", :]
-p6 = @df tf density(sort(tf.α)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "jt305", :]
-@df tf density!(sort(tf.α)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "gob33", :]
-@df tf density!(sort(tf.α)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "bgt127", :]
-p7 = @df tf density(sort(tf.β)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "jt305", :]
-@df tf density!(sort(tf.β)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "gob33", :]
-@df tf density!(sort(tf.β)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "bgt127", :]
-p8 = @df tf density(sort(tf.L)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "jt305", :]
-@df tf density!(sort(tf.L)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "gob33", :]
-@df tf density!(sort(tf.L)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
-plot(p6, p7, p8, legend=false, grid=false, layout=(1,3), size=(500, 100), xticks=false, yticks=false)
+df_long = DataFrame(CSV.File("data/timelapses/longtime_data.csv")) # Experimental
+df_predl = DataFrame(CSV.File("data/sims/bootstrap/boot_trajectories_long_ref.csv")) #Long
+strain = "bgt127"
+tf_ex = filter(x->x.strain .== strain, df_long)
+tf_pr = filter(x->x.strain .== strain, df_predl)
+pr_error = std(Array(tf_pr[:,1:1000]), dims=2)
+scatter(tf_ex.avg_height, tf_pr.t48, 
+        xerror=tf_ex.std_height,
+        yerror=pr_error,
+        color=my_colors[2],markersize=4, 
+        markerstrokewidth=1.5, 
+        label="Aeromonas")
+strain = "jt305"
+tf_ex = filter(x->x.strain .== strain, df_long)
+tf_pr = filter(x->x.strain .== strain, df_predl)
+pr_error = std(Array(tf_pr[:,1:1000]), dims=2)
+scatter!(tf_ex.avg_height, tf_pr.t48, 
+         xerror=tf_ex.std_height,
+         yerror=pr_error,
+         color=my_colors[3],markersize=4, 
+         marker=:diamond, markerstrokewidth=1.5, 
+         label="E coli")
+strain = "gob33"
+tf_ex = filter(x->x.strain .== strain, df_long)
+tf_pr = filter(x->x.strain .== strain, df_predl)
+pr_error = std(Array(tf_pr[:,1:1000]), dims=2)
+scatter!(tf_ex.avg_height, tf_pr.t48, 
+         xerror=tf_ex.std_height,
+         yerror=pr_error,
+         color=my_colors[4],markersize=4, 
+         marker=:square, markerstrokewidth=1.5, 
+         label="Yeast (aa)")
+plot!([0, 1000], [0, 1000], color=:gray, linewidth=3, linestyle=:dash,
+      label=false, legend=:topleft, size=(380, 300))
+savefig("figs/fig4/PM_t48.svg")
+
 ##
-tf = df[df.strain .== "bgt127", :]
-p6 = @df tf density(sort(tf.h_max)[26:974], color=my_colors[2], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "jt305", :]
-@df tf density!(sort(tf.h_max)[26:974], color=my_colors[3], linewidth=3, fill=0,fillalpha=0.1)
-tf = df[df.strain .== "gob33", :]
-@df tf density!(sort(tf.h_max)[26:974], color=my_colors[4], linewidth=3, fill=0,fillalpha=0.1)
+df_temp = DataFrame(CSV.File("data/sims/bootstrap/timeboot_jt305.csv")) # Experimental
+p1 = @df df_temp scatter(:t, :α,  ylim=(0, 0.8), alpha=0.3)
+p2 = @df df_temp scatter(:t, :β,  ylim=(0, 0.07), alpha=0.3)
+p3 = @df df_temp scatter(:t, :L,  ylim=(0, 50.0), alpha=0.3)
+p4 = @df df_temp scatter(:t, :α .* :L ./ :β,  ylim=(0, 800.0), alpha=0.3)
+plot(p1, p2, p3, p4, layout=(4,1), size=(800, 800))
