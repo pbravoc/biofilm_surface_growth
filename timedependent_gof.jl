@@ -49,7 +49,8 @@ function boot_fit(df, n)
     p_bootstrap = []
     n_boots = Int(floor(length(df.time)/(3*5)))
     while length(p_bootstrap) < n
-        Threads.@threads for i=1:n-length(p_bootstrap)
+        #Threads.@threads for i=1:n-length(p_bootstrap)
+        for i=1:n-length(p_bootstrap)
             boot_df = block_bootstrap(df, n_boots, 5)
             try
                 myfit = fit_data(boot_df.time, boot_df.avg_height)
@@ -79,6 +80,6 @@ for i=74:128
     strain_list = repeat(["jt305"], n+1)
     boot_data = [boot_data time_list height_list strain_list]
     [push!(my_df, boot_data[i,:]) for i=1:size(boot_data)[1]]
+    CSV.write("data/sims/bootstrap/time_jt305_bounded.csv", my_df)
 end
 ##
-CSV.write("data/sims/bootstrap/time_jt305.csv", my_df)

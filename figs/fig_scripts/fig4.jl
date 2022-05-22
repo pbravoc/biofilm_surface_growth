@@ -66,11 +66,10 @@ plot!(size=(200, 400), left_margin=5mm, legend=false, ylim=(0, 1060))
 l = @layout [
     a{0.8w} b] 
 p_top = plot(p1, p2, layout=l, size=(500, 400), bottom_margin=8mm, left_margin=3mm, grid=false)
-p_top = plot(p1, size=(450, 400), bottom_margin=8mm, left_margin=3mm, grid=false, background_color=:transparent)
 
-savefig("figs/fig4/fig4_poster.svg")
+#savefig("figs/fig4/fig4_poster.svg")
 
-##
+## RMSE over time
 
 strain = "bgt127"
 tf = df_48[df_48.strain .== strain, :]
@@ -94,10 +93,18 @@ p5 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray
 plot!(yticks=[-10, 10], legend=false)
 
 p_bot = plot(p3, p4, p5, layout=(1,3), size=(700, 80), bottom_margin=3mm, left_margin=3mm)
-savefig("figs/fig4/fig4_bot.svg")
 
-#savefig("figs/fig4/fig4_mix.svg")
-
+## RMSE as bar Plots
+rmse_data = zeros(3,3)
+for i=1:3
+    strain = strain_list[i]
+    tf = df_48[df_48.strain .== strain, :]
+    rmse(y, x) = sqrt(mean((x-y).^2))
+    rmse_data[i,1] = rmse(tf.std_height, tf.avg_height .- tf.avg_height)
+    rmse_data[i,2] = rmse(tf.interface, tf.avg_height)
+    rmse_data[i,3] = rmse(tf.interface_long, tf.avg_height)
+end
+groupedbar(rmse_data[:,2:3])
 ##
 l = @layout [ a{0.7h} 
     b]
@@ -158,7 +165,29 @@ plot!(xscale=:log, yscale=:log)
 l = @layout [
     a{0.8w} b] 
 plot(p1, p2, layout=l, size=(700, 300), bottom_margin=5mm, grid=false)
+
+
+## Boxplots parameter fit
+df_temp = DataFrame(CSV.File("data/sims/bootstrap/time_jt305_unbounded.csv")) # Experimental
+df_temp = filter(x->x.β .> 0, df_temp)
+p_alpha = @df df_temp boxplot(:time, :α,  ylim=(0, 0.4), outliers=false, color=ColorSchemes.okabe_ito[1], yticks=[0.0, 0.4], legend=false)
+p_beta = @df df_temp[df_temp.time .<66,:] boxplot(:time, :β,  ylim=(0, 0.07), outliers=false, color=:gray, width=0.8)
+p_beta = @df df_temp[df_temp.time .>=66,:] boxplot!(:time, :β, outliers=false, color=ColorSchemes.okabe_ito[1], yticks=[0.0, 0.07], legend=false)
+p_L = @df df_temp[df_temp.time .<64,:] boxplot(:time, :L,  ylim=(0, 25.0), outliers=false, color=:gray)
+p_L = @df df_temp[df_temp.time .>=64,:] boxplot!(:time, :L, outliers=false, color=ColorSchemes.okabe_ito[1], yticks=[0.0, 25.0], legend=false)
+
+p_h = @df df_temp[df_temp.time .<66,:] boxplot(:time, :α .* :L ./ :β,  ylim=(0, 750.0), outliers=false, color=:gray, yticks=[0.0, 750], legend=false)
+p_h = @df df_temp[df_temp.time .>= 66,:] boxplot!(:time, :α .* :L ./ :β,  ylim=(0, 750.0), outliers=false, color=ColorSchemes.okabe_ito[1])
+
+l = @layout [a{0.45w} b{0.1w} grid(4,1)] 
+plot(p1, p2, p_alpha, p_beta, p_L, p_h, layout=l, size=(750, 350), left_margin=3mm, bottom_margin=6mm)
+savefig("figs/fig4/fig4_left.svg")
+
 ##
+p1 = @df df_temp boxplot(:time, :α,  ylim=(0, 0.8), alpha=0.3, outliers=false)
+
+##
+## Predicted vs measured
 df_long = DataFrame(CSV.File("data/timelapses/longtime_data.csv")) # Experimental
 df_predl = DataFrame(CSV.File("data/sims/bootstrap/boot_trajectories_long_ref.csv")) #Long
 strain = "bgt127"
@@ -194,11 +223,3 @@ scatter!(tf_ex.avg_height, tf_pr.t48,
 plot!([0, 1000], [0, 1000], color=:gray, linewidth=3, linestyle=:dash,
       label=false, legend=:topleft, size=(380, 300))
 savefig("figs/fig4/PM_t48.svg")
-
-##
-df_temp = DataFrame(CSV.File("data/sims/bootstrap/timeboot_jt305.csv")) # Experimental
-p1 = @df df_temp scatter(:t, :α,  ylim=(0, 0.8), alpha=0.3)
-p2 = @df df_temp scatter(:t, :β,  ylim=(0, 0.07), alpha=0.3)
-p3 = @df df_temp scatter(:t, :L,  ylim=(0, 50.0), alpha=0.3)
-p4 = @df df_temp scatter(:t, :α .* :L ./ :β,  ylim=(0, 800.0), alpha=0.3)
-plot(p1, p2, p3, p4, layout=(4,1), size=(800, 800))
