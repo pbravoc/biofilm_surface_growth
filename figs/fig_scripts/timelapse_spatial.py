@@ -108,6 +108,8 @@ files = ["/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/ra
 "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_019.datx"]
 t = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/data/timelapses/2021-06-25_bgt127/times.npy")[1,1:9]
 
+files = "/home/pablo/Downloads/bgt127_001.datx"
+t = np.array([1])
 #%%
 clean_data = []
 for file in files:
@@ -139,5 +141,16 @@ cbar.ax.set_ylabel('Z [$n m$]', rotation=90, fontsize=14)
 cbar.set_ticks([0, 200,400, 600, 800, 1000])
 cmap = plt.cm.ScalarMappable(norm=norm, cmap='viridis')
 cmap.set_array([])
-plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/top_view_nanometer.svg")
+#plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/top_view_nanometer.svg")
+# %%
+t,d,l,r = 90, 250, 10000, 16000
+zs, zi = get_data(files)
+cr_2d = subplane(zs[t:d,l:r])
+new_img = np.copy(cr_2d)-np.nanmin(cr_2d)
+plt.figure(figsize=(15, 5))
+plt.imshow(new_img, cmap="inferno")
+plt.axis("off")
+plt.tight_layout()
+#plt.colorbar()
+plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/profiles/early_surface.svg")
 # %%

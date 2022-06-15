@@ -55,10 +55,11 @@ p1 = @df pf scatter(:time, :data, yerr=:data_error, markersize=2, color=myc[1],
 @df pf plot!(:time, :interface_n, color=myc[2], linewidth=3, label="Interface (n)")
 @df pf plot!(:time, :logistic, color=myc[3], linestyle=:dash, linewidth=3, label="Logistic")
 @df pf plot!(:time, :interface, color=myc[2], linestyle=:dash, linewidth=3, label="Interface")
-plot!(xlabel="Time [hr]", ylabel="Height [μm]", grid=false, size=(500, 400), dpi=300)
+plot!(xlabel="Time [hr]", ylabel="Height [μm]", grid=false, size=(300, 300), dpi=300)
 #savefig("figs/fig3/a_unboundedfit.svg")
 annotate!(2, 205, "A")
 
+##
 rmse(x, y) = sqrt(mean(x.-y).^2)
 my_rmse = [rmse(x, pf.data) for x in [pf.nutrient_n, pf.logistic_n, pf.interface_n, pf.logistic, pf.interface]]
 bar!(#["Nutrient (n)", "Logistic (n)", "Interface (n)", "Logistic", "Interface"], 
@@ -79,7 +80,7 @@ p2 = @df pf plot(:time, :data - :data, color=myc[1], linestyle=:dash, ribbon=:da
 plot!(xlabel="Time [hr]", ylabel="Residual [μm]", legend=false)
 
 annotate!(45, 25, "B")
-
+##
 #plot!(inset = (1, bbox(0.35, 0.6, 0.3, 0.35)), subplot=2)
 #@df pf scatter!(:data, :nutrient_n, color=3, markersize=2, markerstrokecolor=:auto, label="nutrient_n", subplot=2)
 #@df pf scatter!(:data, :logistic, color=2, linestyle=:dash, markersize=2, markerstrokecolor=:auto, label="Logistic", subplot=2)
@@ -106,13 +107,13 @@ plot_slope(pf.logistic_n, pf.time, dt, myc[3], "L (n)")
 plot!(xlim=(-1, 220.0), ylim=(-0.1, 13.0), legend=false)
 #savefiyg("figs/figs_temp/fig3_c.svg")
 annotate!(200, 11.5, "C")
-
+##
 l = @layout [
     a{0.6w} [b{0.5h}  
              c{0.5h}] 
 ]
 plot(p1, p2, p3, size=(700, 350), layout=l, bottom_margin=4mm, left_margin=3mm, grid=false)
-savefig("figs/fig3/fig3.pdf")
+#savefig("figs/fig3/fig3.pdf")
 
 ##
 
@@ -161,3 +162,28 @@ groupedbar(["Aeromonas", "E coli", "Yeast (aa)"],
 #plot!([2.1, 2.9], [h_gob33, h_gob33], color=:black, linestyle=:dash, label=false)
 plot!(size=(400, 200), dpi=500)
 #savefig("figs/fig5/finalheight_temp_rel.png")
+## Poster v 
+function plot_slope(y, x, dt, c, l)
+    smooth, slope, slope_error = smooth_heights(y, x, dt)
+    plot!(y, slope, ribbon=slope_error, color=c, label=l, linewidth=2, subplot=2)
+end
+p1 = @df pf scatter(:time, :data, yerr=:data_error, markersize=2, color=myc[1],
+               legend=:topleft, label=false, grid=false)
+@df pf plot!(:time, :logistic_n, color=myc[3], linewidth=3, label="Logistic (n)")
+#@df pf plot!(:time, :interface_n, color=myc[2], linewidth=3, label="Interface (n)")
+@df pf plot!(:time, :logistic, color=myc[3], linestyle=:dash, linewidth=3, label="Logistic")
+#@df pf plot!(:time, :interface, color=myc[2], linestyle=:dash, linewidth=3, label="Interface")
+plot!(xlabel="Time [hr]", ylabel="Height [μm]", legend=false)
+p3 = plot!(xlabel="h[μm]", ylabel="Δh [μm/hr]", 
+           inset = (1, bbox(0.5, 0.48, 0.48, 0.35)),subplot=2,)
+scatter!(h, dh, xerror=pf.data_error, yerror=dh_e, color=:black, alpha=0.75,
+         markersize=2, label=false, subplot=2)
+#vline!([h[findmax(dh)[2]]], color=:black, linestyle=:dash, label=false)
+#hline!([0.0], color=:black, linestyle=:dash, label=false, legend=:right)
+#plot_slope(pf.interface, pf.time, dt, myc[2], "I")
+#plot_slope(pf.nutrient_n, pf.time, dt, myc[4], "N (n)")
+plot_slope(pf.logistic_n, pf.time, dt, myc[3], "L (n)")
+#plot!([500.0, 510.0], [[1,1], [2,2], [3,3]], color=[1 2 3], label=["a" "b" "c"])
+plot!(xlim=(-1, 220.0), ylim=(-0.1, 13.0), legend=false, subplot=2, grid=false)
+plot!(size=(500, 300), background=:transparent)
+savefig("figs/fig3/fig3_poster.svg")

@@ -40,7 +40,6 @@ function order_average(Df)
     return t, t_e, h, h_e
 end
 ##
-model_list = [interface]    # Add the other models
 longtime_list = ["bgt127", "gob33", "jt305"]
 df = DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.time .< 48 && x.avg_height .> 0 && 
@@ -50,6 +49,7 @@ pf2 = DataFrame(CSV.File("data/timelapses/fit_params_logistic.csv"))
 Data = DataFrame(strain = String[], time=Float32[], time_error=Float32[],
                  avg_height = Float32[], std_height = Float32[], 
                  interface = Float32[], interface_long = Float32[],
+                 interface_alt = Float32[],
                  logistic = Float32[], logistic_long = Float32[]) 
 ##
 for strain in unique(df.strain)
@@ -71,7 +71,13 @@ for strain in unique(df.strain)
     problem = ODEProblem(interface, [0.1], (0.0, t[end]), p)
     sol = solve(problem, saveat=t, save_idxs=1)
     sf.interface = sol.u
-
+    # Interface alt 
+    p = Array(filter(x->x.fit.=="alt" && x.strain .== strain, 
+                     pf)[:,3:5])
+    problem = ODEProblem(interface, [0.1], (0.0, t[end]), p)
+    sol = solve(problem, saveat=t, save_idxs=1)
+    sf.interface_alt = sol.u
+    ## Logistic
     p = Array(filter(x->x.fit.=="48h" && x.strain .== strain, 
                      pf2)[:,3:4])
     problem = ODEProblem(logistic, [0.1], (0.0, t[end]), p)
@@ -94,4 +100,4 @@ for strain in unique(df.strain)
     append!(Data, sf)
 end
 ##
-CSV.write("data/timelapses/model_predictions.csv", Data)
+CSV.write("data/timelapses/model_predictionsv2.csv", Data)
