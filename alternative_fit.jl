@@ -5,7 +5,7 @@ using Plots, StatsPlots
 using Optim
 
 ## This is to do bootstrap fitting on 48h data
-strain_name = "sw519"
+strain_name = "bgt127"
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.strain .== strain_name && x.time .< 48 &&
                 x.replicate in ["A", "B", "C"] &&
@@ -13,10 +13,11 @@ df = filter(x-> x.strain .== strain_name && x.time .< 48 &&
 interface(h, p) = p[1]*min(h, p[3]) - p[2]*h
 
 h_array = Array(0.0:0.1:200.0)
-h_change = [interface(h, [0.6, 20.0, 0.05]) for h in h_array]
+h_change = [interface(h, [0.6, 0.05, 20.0]) for h in h_array]
 
-@df df scatter(:avg_height, :slope)
-plot!(h_array, h_change)
+@df df scatter(:avg_height, :slope, color=:gray, alpha=0.75, label="Data")
+plot!(h_array, h_change, color=ColorSchemes.okabe_ito[1], linewidth=3, label="Interface")
+##
 function minimize_function(x)
     h_array = df.avg_height
     h_data = df.slope 
@@ -27,11 +28,24 @@ end
 
 minimize_function([0.6, 20.0, 0.06])
 x0 = [0.6, 20.0, 0.06]
-res = optimize(minimize_function, x0)
+res = optimize(minimize_function, x0, store_trace=true, extended_trace=true)
 h_optim = [interface(h, Optim.minimizer(res)) for h in h_array]
 @df df scatter(:avg_height, :slope, yerror=:slope_error, color=:black)
 plot!(h_array, h_optim, ylim=(0, 10), xlim=(0, 150), linewidth=3)
 print(Optim.minimizer(res))
+
+##
+P = [p.metadata["centroid"] for p in res.trace]
+v = [p.value for p in res.trace]
+anim = @animate for i=250:1:455
+    @df df scatter(:avg_height, :slope, color=:gray, alpha=0.75, label="Data")
+    h_optim = [interface(h, P[i]) for h in h_array]
+    plot!(h_array, h_optim, color=ColorSchemes.okabe_ito[1], linewidth=3, label="Interface")
+    plot!(title=v[i], xlim=(0, 220), ylim=(0, 15), grid=false, xlabel="Height [μm]",
+          ylabel="Δ Height [μm/hr]", size=(450, 400), dpi=500)
+end
+gif(anim, "figs/alt_fitting.gif")
+
 ##
 strain_list = unique(Df.strain)
 P = []
@@ -61,10 +75,12 @@ p2 = @df pf groupedbar(:strain, :x2, group=:fit, legend=false, ylabel="β [μm/h
 p3 = @df pf groupedbar(:strain, :x3, group=:fit, legend=false, ylabel="L [μm]")
 p4 = @df pf groupedbar(:strain, :h_max, group=:fit, legend=false, ylabel="h_max [μm]")
 plot(p1, p2, p3, p4, size=(600, 400), xrotation=45, grid=false)
+savefig("figs/alt_fitting_vals.svg")
 ##
 df = DataFrame(CSV.File("data/timelapses/model_predictionsv2.csv"))
-df = filter(x-> x.strain .== "bgt127" && x.time .< 48, df)
+df = filter(x-> x.strain .== "sw519" && x.time .< 48, df)
 @df df scatter(:time, :avg_height, yerror=:std_height, 
-               color=:gray, alpha=0.5, label="Data")
-@df df plot!(:time, [:interface, :interface_alt], color=[1 2], linewidth=3)
-plot!(legend=:topleft)
+               color=:gray, alpha=0.75, label="Data")
+@df df plot!(:time, [:interface, :interface_alt], color=[1 2], linewidth=3, label=["48h" "Alt"])
+plot!(legend=:topleft, grid=false, size=(600, 400), xlabel="Time [hr]", ylabel="Height [μm]")
+savefig("figs/alt_sw519.svg")

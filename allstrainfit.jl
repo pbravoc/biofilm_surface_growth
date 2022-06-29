@@ -69,12 +69,13 @@ end
 
 ##
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
-Df = filter(x-> x.avg_height .> 0, Df)                    # Smaller than 0 values don't make physical sense
+Df = filter(x-> x.avg_height .> 0 && x.time .<48 && x.replicate in ["A", "B", "C"], Df)                    # Smaller than 0 values don't make physical sense
 df2 = DataFrame(CSV.File("data/timelapses/longtime_data.csv"))
 strain_list = unique(Df.strain)
 #model_choice, n_parameters = logistic, 2
 model_choice, n_parameters = interface, 3
 u_list = Array(0.01:0.01:0.5)
+u_list = [0.1]
 P = []
 Strain = []
 Fit = []
@@ -134,7 +135,7 @@ end
 pf = hcat(DataFrame("strain"=>Strain, "fit"=>Fit, "u0"=>U),
           DataFrame(Matrix(reduce(hcat, P)'), :auto))
 ## Save to file
-CSV.write("data/timelapses/fit_params_u0.csv", pf)
+CSV.write("data/timelapses/fit_params_interfacev2.csv", pf)
 
  
 ##
@@ -149,3 +150,33 @@ pf.h = pf.x1 .* pf.x3 ./ pf.x2
                label = ["Aeromonas" "Yeast (aa)" "E coli"],
                legend=:bottomright, markersize=3, dpi=500)
 savefig("figs/fig3/starting_conditions.png")
+
+##
+function fit_data(t_data, h_data, model, u0=[0.1], pguess=[0.8, 0.05, 15.0])# pguess=[0.8, 0.05, 15.0]) # 
+    idxs = sortperm(t_data)  # Sort time indexes
+    t_data, h_data = t_data[idxs], h_data[idxs]
+    prob = ODEProblem(model, u0, (0.0, t_data[end]), pguess)
+    function loss(p)
+        sol = solve(prob, Tsit5(), p=p, saveat=t_data, save_idxs=1) # Force time savings to match data
+        sol_array = reduce(vcat, sol.u)
+        loss = sum(abs2, sol_array .- h_data)
+        return loss, sol
+    end 
+    result_ode = DiffEqFlux.sciml_train(loss, pguess)
+    return result_ode
+end 
+##
+df = filter(x-> x.strain .== "bgt127" && x.time .<48, Df)
+pguess=[0.8, 0.05, 15.0]              
+idxs = sortperm(df.time)  # Sort time indexes
+t_data, h_data = df.time[idxs], df.avg_height[idxs]
+prob = ODEProblem(interface, [0.1], (0.0, t_data[end]), pguess)
+function loss(p)
+    sol = solve(prob, Tsit5(), p=p, saveat=t_data, save_idxs=1) # Force time savings to match data
+    sol_array = reduce(vcat, sol.u)
+    loss = sum(abs2, sol_array .- h_data)
+    return loss, sol
+end 
+##
+result_ode = Optimization.solve(loss, pguess)
+##

@@ -53,11 +53,13 @@ function boot_fit(df, n)
     return reduce(hcat, p_bootstrap)'
 end
 ## This is to do bootstrap fitting on 48h data
-strain_name = "sw519"
+strain_name = "bgt127"
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.strain .== strain_name && x.time .< 48 &&
                 x.replicate in ["A", "B", "C"] &&
                 x.avg_height > 0 , Df)
+best_fit = fit_data(df.time, df.avg_height)
+
 ##
 data = boot_fit(df, 1000)
 parameters_frame = DataFrame("α"=>data[:,1], "β"=>data[:,2], "L"=>data[:,3])
