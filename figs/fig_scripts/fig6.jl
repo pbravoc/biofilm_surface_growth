@@ -3,7 +3,7 @@ This is the figure that shows all the parameters, h_max
 for all the strains in the same plot. Maybe there's a way to 
 join this figure w number 6 (as insets?)
 =#
-
+##
 using DataFrames, CSV
 using Statistics
 using Plots, StatsPlots, Plots.Measures
@@ -12,7 +12,7 @@ using ColorSchemes
 df = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
 df = filter(x->x.α .> 0 && x.β .>0 && x.L .>0, df)
 gf = groupby(df, :strain)
-percentage_border = 0.0
+percentage_border = 0.1
 ql(x) = round(quantile(x, [percentage_border])[1], digits=3) # Quantile low
 qh(x) = round(quantile(x, [1-percentage_border][1]), digits=3) # Quantile high
 gf_summary = combine(gf, [:α=>ql, :α=>qh,

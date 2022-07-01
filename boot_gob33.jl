@@ -30,9 +30,9 @@ function fit_data(t_data, h_data, pguess=[0.8, 0.1, 15.0])
         loss = sum(abs2, sol_array .- h_data)
         return loss, sol
     end 
-    result_ode = DiffEqFlux.sciml_train(loss, pguess,
-                                        lower_bounds = [1e-3, 1e-3, 1],
-                                        upper_bounds = [1e1, 1, 1e2])
+    result_ode = DiffEqFlux.sciml_train(loss, pguess)
+                                        #lower_bounds = [1e-3, 1e-3, 1],
+                                        #upper_bounds = [1e1, 1, 1e2])
     return result_ode
 end 
 
@@ -53,7 +53,7 @@ function boot_fit(df, n)
     return reduce(hcat, p_bootstrap)'
 end
 ## This is to do bootstrap fitting on 48h data
-strain_name = "bgt127"
+strain_name = "gob33"
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x-> x.strain .== strain_name && x.time .< 48 &&
                 x.replicate in ["A", "B", "C"] &&
