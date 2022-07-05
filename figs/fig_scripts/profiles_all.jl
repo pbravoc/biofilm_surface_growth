@@ -1,6 +1,6 @@
 using Plots, NPZ
 
-## Aeromonas
+# Aeromonas
 folder = "2021-06-25_bgt127"
 data = npzread("data/timelapses/"*folder*"/profiles_B.npy")[99,:]
 t = npzread("data/timelapses/"*folder*"/times.npy")[1,:]
@@ -23,7 +23,7 @@ t = npzread("data/timelapses/"*folder*"/times.npy")[1,:]
 x = (Array(1:length(data)) .- length(data)/2) .* 0.173 .+ x_off
 plot!(x, data, legend=false, color=:black, linewidth=1.5, size=(750, 300))
 
-## Yeast
+# Yeast
 plot()
 folder = "2022-01-28_y55"
 x_off = 0
@@ -32,7 +32,7 @@ t = npzread("data/timelapses/"*folder*"/times.npy")[:,1]
 x = (Array(1:length(data)) .- length(data)/2) .* 0.173.*5 .+ x_off
 plot!(x, data, legend=false, color=:black, linewidth=1.5, size=(750, 300))
 
-##
+#
 # V cholerae (Wt)
 folder = "2022-02-11_bh1514"
 x_off = x[end]+3000
@@ -76,4 +76,4 @@ plot!(x, data, legend=false, color=:black, linewidth=1.5, size=(750, 300))
 
 plot!(xticks=[], yticks=[], axis=false, grid=false, background=:transparent)
 plot!(size=(2300, 400), aspect_ratio=:equal)
-savefig("figs/profiles/profiles_48_equal.svg")
+#savefig("figs/profiles/profiles_48_equal.svg")

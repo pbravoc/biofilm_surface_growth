@@ -10,7 +10,6 @@ using DataFrames, CSV
 using Statistics, NaNMath
 using Plots, StatsPlots, Plots.Measures
 using ColorSchemes
-##
 df = DataFrame(CSV.File("data/timelapses/model_predictions.csv"))
 
 ## Grid plot
@@ -39,8 +38,8 @@ for i=1:9
     annotate!((0.07, 0.81), text(str_logistic, ColorSchemes.Greys_9[7], :left, 6), subplot=i)
     plot!(xlabel="Time [hr]", ylabel="Height [μm]", subplot=i, legend=false)
 end 
-plot(P, bottom_margin=3mm, left_margin=5mm, grid=false, background_color=:transparent)
-#savefig("figs/fig5/fig5_logistic.pdf")
+plot(P, bottom_margin=3mm, left_margin=5mm, grid=false, background_color=:white)
+savefig("figs/fig5/fig5_logistic.pdf")
 
 ## RMSE bar plot
 RMSE_logistic = []

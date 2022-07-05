@@ -73,7 +73,6 @@ annotate!(9, 1, text("II", 8, "courier"))
 plot!(size=(500, 400))
 savefig("figs/fig2/2_supp1.svg")
 =#
-#
 nr_profiles = npzread("data/timelapses/columns/profiles_nr.npy")
 nr_heights = [NaNMath.mean(nr_profiles[i,:4000:6000]) for i=1:36]
 nr_heights = reshape(nr_heights, (3,12))
@@ -100,11 +99,9 @@ p4 = bar([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)],
          label=false, xticks=([1,2], ["NR", "R"]), color=[:gray, ColorSchemes.okabe_ito[1]], 
          yticks=[], ylabel="Total Height [μm]")
 annotate!(0.94, 505, "D")
-annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90))
-annotate!(2, 105, text("462.1 μm", 6, "courier", :left, rotation=90))
+annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90, color=:white))
+annotate!(2, 105, text("462.1 μm", 6, "courier", :left, rotation=90, color=:white))
 
-#
-#
 p5 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:gray, linewidth=3, label="Concentration", size=(400, 400), xlim=(0,2))
 plot!(x, sol_ana ./ maximum(sol_ana), color=ColorSchemes.okabe_ito[1], linewidth=3, label="Cumulative", xlim=(0,2))
 plot!(x, sol_dis ./ maximum(sol_dis), color=ColorSchemes.okabe_ito[1],  linewidth=3,linestyle=:dash,label="Approximation")
@@ -112,11 +109,47 @@ vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend
 xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200), yticks=[])
 annotate!(0.12, 0.96, "E")
 
-#
 #savefig("figs/fig2/2_conconly.svg")
 l = @layout [[a{0.6h}
               b{0.7w} c{0.3w}] [d{0.6h}
                         e{0.4h}]]
 plot(p1, p3, p4, p2, p5, layout=l, size=(700, 450), dpi=300)
-savefig("figs/fig2/fig2.svg")
+#savefig("figs/fig2/fig2.svg")
 ##
+nr_bounds = npzread("data/timelapses/columns/bounds_A.npy")
+nr_radius = reshape(nr_bounds[:,2]-nr_bounds[:,1], (3,12))*0.865
+r_bounds = npzread("data/timelapses/columns/bounds_B.npy")
+r_radius = reshape(r_bounds[:,2]-r_bounds[:,1], (3, 12))*0.865
+plot(nr_radius, color=1)
+plot!(r_radius, color=2, legend=false)
+#
+nr_volume = pi*(nr_heights .* nr_radius)
+r_volume = pi*(r_heights .* r_radius)
+plot(nr_volume, color=1)
+plot!(r_volume, color=2)
+
+nr_h, nr_e = mean(nr_volume, dims=2), std(nr_volume, dims=2)
+r_h, r_e = mean(r_volume, dims=2), std(r_volume, dims=2)
+p_v1 = plot([nr_h, r_h], yerror=[nr_e r_e], marker=[:circle :diamond], markersize=5,  
+            linewidth=3,color=[:gray ColorSchemes.okabe_ito[1]],
+            ylim=(0, 8e6),
+            label=["NR" "R"])
+plot!(legend=(0.15, 0.25), xticks=[1,2,3], xlabel="Iteration", ylabel="Volume [μm³]")
+#
+total_nr, total_r = maximum(nr_volume, dims=1), sum(r_volume, dims=1)
+#=
+bar!([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], label=false,
+     inset = (1, bbox(0.15, 0.6, 0.15, 0.35)),subplot=2, title="Tot. growth [μm]", color=[:gray, ColorSchemes.okabe_ito[1]],
+     titlefontsize=8, xticks=[], yticks=[0, 250, 500])
+=#
+p_v2 = bar([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], 
+         label=false, xticks=([1,2], ["NR", "R"]), color=[:gray, ColorSchemes.okabe_ito[1]], 
+         yticks=[], ylabel="Total Volume [μm³]")
+annotate!(1, 5e5, text("6.82e6 μm³", 8, "courier", :left, rotation=90, color=:white))
+annotate!(2, 5e5, text("7.11e6 μm³", 8, "courier", :left, rotation=90, color=:white))
+l = @layout [a{0.7w} b]
+plot(p_v1, p_v2, grid=false, size=(500, 250), layout=l, bottom_margin=3mm, left_margin=3mm, dpi=500)
+savefig("figs/fig2/fig2_volumes.svg")
+
+##
+mean(total_r)
