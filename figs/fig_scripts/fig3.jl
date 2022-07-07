@@ -43,23 +43,23 @@ Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x->x.strain .== "bgt127" && 
                x.time .<= 48 && x.replicate =="A", Df)
 pf = DataFrame(CSV.File("data/sims/f3a_heights_bounded.csv"))
-#pf = DataFrame(CSV.File("data/sims/f3a_heights_unbounded.csv"))
+pf = DataFrame(CSV.File("data/sims/f3a_heights_unbounded.csv"))
 
 myc = [ColorSchemes.gray1[1], ColorSchemes.okabe_ito[1],
                  ColorSchemes.okabe_ito[2], ColorSchemes.okabe_ito[3]] #okabe&ito(2002)
 ##
 p1 = @df pf scatter(:time, :data, yerr=:data_error, markersize=2, color=myc[1],
-               legend=:right, label=false)
-@df pf plot!(:time, :nutrient_n, color=myc[4], linewidth=3, label="Nutrient")
-@df pf plot!(:time, :logistic_n, color=myc[3], linewidth=3, label="Logistic (n)")
-@df pf plot!(:time, :interface_n, color=myc[2], linewidth=3, label="Interface (n)")
-@df pf plot!(:time, :logistic, color=myc[3], linestyle=:dash, linewidth=3, label="Logistic")
-@df pf plot!(:time, :interface, color=myc[2], linestyle=:dash, linewidth=3, label="Interface")
-plot!(xlabel="Time [hr]", ylabel="Height [μm]", grid=false, size=(300, 300), dpi=300)
+               legend=:topleft, label=false)
+@df pf plot!(:time, :nutrient_n, color=myc[4], linewidth=2, label="Nutrient")
+@df pf plot!(:time, :logistic_n, color=myc[3], linewidth=2, label="Logistic (n)")
+@df pf plot!(:time, :interface_n, color=myc[2], linewidth=2, label="Interface (n)")
+@df pf plot!(:time, :logistic, color=myc[3], linestyle=:dash, linewidth=2, label="Logistic")
+@df pf plot!(:time, :interface, color=myc[2], linestyle=:dash, linewidth=2, label="Interface")
+plot!(xlabel="Time [hr]", ylabel="Height [μm]", grid=false, size=(400, 300), dpi=300)
 #savefig("figs/fig3/a_unboundedfit.svg")
-annotate!(2, 205, "A")
+#annotate!(2, 205, "A")
 
-##
+#
 rmse(x, y) = sqrt(mean(x.-y).^2)
 my_rmse = [rmse(x, pf.data) for x in [pf.nutrient_n, pf.logistic_n, pf.interface_n, pf.logistic, pf.interface]]
 bar!(#["Nutrient (n)", "Logistic (n)", "Interface (n)", "Logistic", "Interface"], 
@@ -68,7 +68,10 @@ bar!(#["Nutrient (n)", "Logistic (n)", "Interface (n)", "Logistic", "Interface"]
      fillstyle=[nothing, nothing, nothing, :x, :x],
      yscale=:log10, xrotation=40, yguidefontsize=10,
      inset = (1, bbox(0.535, 0.72, 0.43, 0.25)),subplot=2, title="RMSE [μm]",
-     titlefontsize=10)
+     titlefontsize=10, grid=false)
+plot!(size=(400, 300))
+savefig("figs/fig3/fig3_unbounded.pdf")
+
 ##
 p2 = @df pf plot(:time, :data - :data, color=myc[1], linestyle=:dash, ribbon=:data_error, fillalpha=0.2, label=false)
 

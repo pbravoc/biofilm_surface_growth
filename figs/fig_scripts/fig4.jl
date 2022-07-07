@@ -113,9 +113,6 @@ annotate!(20, 1000, "A")
 my_bgt = h_change("bgt127")
 my_jt = h_change("jt305")
 my_gob = h_change("gob33")
-bgt_2p = dh_2p(df, "bgt127")
-jt_2p = dh_2p(df, "jt305")
-gob_2p = dh_2p(df, "gob33")
 bgt_3p = dh_3p(df, "bgt127")
 jt_3p = dh_3p(df, "jt305")
 gob_3p = dh_3p(df, "gob33")
@@ -176,12 +173,6 @@ plot(p1, p2, p3, p4, p5, layout=l, size=(750, 350), left_margin=3mm, bottom_marg
 savefig("figs/fig4/fig4_new.svg")
 
 ##
-
-##
-savefig("figs/fig4/fig4_48h.svg")
-
-##
-
 my_bgt = h_change("bgt127")
 my_jt = h_change("jt305")
 my_gob = h_change("gob33")
@@ -197,48 +188,75 @@ l = @layout [a{0.6w} [b{0.8h}
                       grid(1,3)]] 
 plot(p1, p2, p3, p4, p5, layout=l, size=(750, 350), left_margin=3mm, bottom_margin=3mm, grid=false)
 
+
+## Supplemental Figure 1
+pf_boot = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
+pf_best = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
+pf_boot = filter(x->x.β >0.01, pf_boot)
+# 
+strain = "bgt127"
+tf = filter(x->x.strain .== strain, pf_boot)
+tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
+p1 = @df tf density(:α, color=:black, linewidth=2, fillcolor=my_colors[2], fill=true, fillalpha=0.5)
+vline!([tf2.x1], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 25))
+p2 = @df tf density(:β,color=:black, linewidth=2, fillcolor=my_colors[2], fill=true, fillalpha=0.5)
+vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 190))
+p3 = @df tf density(:L, color=:black, linewidth=2, fillcolor=my_colors[2], fill=true, fillalpha=0.5)
+vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 1.2))
+plot(tf.L)
+##        
+strain = "jt305"
+tf = filter(x->x.strain .== strain, pf_boot)
+tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
+p4 = @df tf histogram(:α, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5)
+vline!([tf2.x1], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 30))
+p5 = @df tf histogram(:β, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5)
+vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 48))
+p6 = @df tf histogram(:L, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5, normalized=true)
+vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 0.25.0))
 ##
-plot(xlabel="Time [hr]", ylabel="Height [μm]", ylim=(0, 1060), legend=:topleft, grid=false)
-
-@df df_pred[df_pred.strain .== "bgt127", :] plot!(:time, :tall, color=my_colors[2], linewidth=3, linestyle=:solid, label=false)
-@df df_pred[df_pred.strain .== "jt305", :] plot!(:time, :tall, color=my_colors[3], linewidth=3, linestyle=:solid, label=false)
-@df df_pred[df_pred.strain .== "gob33", :] plot!(:time, :tall, color=my_colors[4], linewidth=3, linestyle=:solid, label=false)
-
-
-##RMSE over time
+strain = "gob33"
+tf = filter(x->x.strain .== strain, pf_boot)
+tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
+p7 = @df tf histogram(:α, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
+vline!([tf2.x1], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 90))
+p8 = @df tf histogram(:β, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
+vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 122))
+p9 = @df tf histogram(:L, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
+vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
+        ylim=(0, 6.11))
+##
+plot(p1, p2, p3, p4, p5, p6, p7, p8, p9, legend=false, grid=false, yticks=[])
+##
+pf_boot = filter(x->x.β >0.01 && x.strain in ["bgt127", "jt305", "gob33"], pf_boot)
+@df pf_boot histogram(:L, group=:strain, normalized=true)
+##
 strain = "bgt127"
 tf = df_48[df_48.strain .== strain, :]
-p3 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface-:avg_height, color=my_colors[2],linestyle=:dash, linewidth=2 )
+p2 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
 @df tf plot!(:time, :interface_long-:avg_height, color=my_colors[2], linewidth=2 )
 plot!(yticks=[-10, 5], legend=false)
 
 strain = "jt305"
 tf = df_48[df_48.strain .== strain, :]
-p4 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface-:avg_height, color=my_colors[3],linestyle=:dash, linewidth=2 )
+p3 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
 @df tf plot!(:time, :interface_long-:avg_height, color=my_colors[3], linewidth=2 )
 plot!(yticks=[-6, 6], legend=false)
 
 strain = "gob33"
 tf = df_48[df_48.strain .== strain, :]
-p5 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface-:avg_height, color=my_colors[4], linestyle=:dash, linewidth=2 )
+p4 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
 @df tf plot!(:time, :interface_long-:avg_height, color=my_colors[4], linewidth=2 )
 plot!(yticks=[-10, 10], legend=false)
 
-p_bot = plot(p3, p4, p5, layout=(1,3), size=(700, 80), bottom_margin=3mm, left_margin=3mm)
-
-## RMSE as bar Plots
-rmse_data = zeros(3,3)
-for i=1:3
-    strain = strain_list[i]
-    tf = df_48[df_48.strain .== strain, :]
-    rmse(y, x) = sqrt(mean((x-y).^2))
-    rmse_data[i,1] = rmse(tf.std_height, tf.avg_height .- tf.avg_height)
-    rmse_data[i,2] = rmse(tf.interface, tf.avg_height)
-    rmse_data[i,3] = rmse(tf.interface_long, tf.avg_height)
-end
-groupedbar(rmse_data[:,2:3])
+p_supp = plot(p2, p3, p4, layout=(1,3), size=(700, 80), bottom_margin=3mm, left_margin=3mm)
 
 ##

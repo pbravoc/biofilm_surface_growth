@@ -46,8 +46,8 @@ annotate!(2, 205, "A")
              marker=:circle, markersize=1, markerstrokecolor=:auto,
              inset = (1, bbox(0.5, 0.45, 0.5, 0.45)), subplot=2,
              linewidth=1.5,yscale=:log10)
-##
-             #
+#
+
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false, color=my_colors,
@@ -58,8 +58,7 @@ p2 = vline!([27.5], color=ColorSchemes.okabe_ito[1], linewidth=3,linestyle=:dash
 p2 = annotate!(20, 1, text("I", 8, "courier"))
 p2 = annotate!(40, 1, text("II", 8, "courier"))
 annotate!(5, 12, "B")
-
-#= supp1
+##
 @df df plot(:time, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false,
@@ -67,12 +66,12 @@ annotate!(5, 12, "B")
             color=my_colors,
             xlabel="Time [hr]", ylabel="Δ Height [μm/hr]",
             linewidth=2)
-vline!([7.5], color=:black, linestyle=:dash, label=false)
-annotate!(6.5, 1, text("I", 8, "courier"))
-annotate!(9, 1, text("II", 8, "courier"))
-plot!(size=(500, 400))
-savefig("figs/fig2/2_supp1.svg")
-=#
+vline!([7.5], color=ColorSchemes.okabe_ito[1], linestyle=:dash, label=false, linewidth=3)
+annotate!(5.5, 1, text("I", 12, "courier"))
+annotate!(11, 1, text("II", 12, "courier"))
+plot!(size=(400, 250))
+savefig("figs/fig2/fig2_time.pdf")
+##
 nr_profiles = npzread("data/timelapses/columns/profiles_nr.npy")
 nr_heights = [NaNMath.mean(nr_profiles[i,:4000:6000]) for i=1:36]
 nr_heights = reshape(nr_heights, (3,12))
@@ -81,12 +80,12 @@ r_heights = [NaNMath.mean(r_profiles[i,:2500:4500]) for i=1:36]
 r_heights = reshape(r_heights, (3,12))
 p3 = plot(nr_heights, color=1, marker=:circle)
 plot!(r_heights, color=2, marker=:diamond)
-plot!(legend=false)
+plot!(legend=false, grid=false)
 nr_h, nr_e = mean(nr_heights, dims=2), std(nr_heights, dims=2)
 r_h, r_e = mean(r_heights, dims=2), std(r_heights, dims=2)
 p3 = plot([nr_h, r_h], yerror=[nr_e r_e], marker=[:circle :diamond], markersize=5,  linewidth=3,color=[:gray ColorSchemes.okabe_ito[1]],
           label=["NR" "R"])
-plot!(legend=(0.15, 0.25), ylim=(0, 320), xticks=[1,2,3], xlabel="Iteration", ylabel="Height [μm]")
+plot!(legend=(0.15, 0.25), ylim=(0, 320), xticks=[1,2,3], xlabel="Iteration", ylabel="Height [μm]", grid=false)
 annotate!(1.15, 300, "C")
 
 total_nr, total_r = maximum(nr_heights, dims=1), sum(r_heights, dims=1)
@@ -97,10 +96,10 @@ bar!([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], labe
 =#
 p4 = bar([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], 
          label=false, xticks=([1,2], ["NR", "R"]), color=[:gray, ColorSchemes.okabe_ito[1]], 
-         yticks=[], ylabel="Total Height [μm]")
+         yticks=[], ylabel="Total Height [μm]", grid=false)
 annotate!(0.94, 505, "D")
 annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90, color=:white))
-annotate!(2, 105, text("462.1 μm", 6, "courier", :left, rotation=90, color=:white))
+annotate!(2, 15, text("462.1 μm", 6, "courier", :left, rotation=90, color=:white))
 
 p5 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:gray, linewidth=3, label="Concentration", size=(400, 400), xlim=(0,2))
 plot!(x, sol_ana ./ maximum(sol_ana), color=ColorSchemes.okabe_ito[1], linewidth=3, label="Cumulative", xlim=(0,2))
@@ -114,7 +113,7 @@ l = @layout [[a{0.6h}
               b{0.7w} c{0.3w}] [d{0.6h}
                         e{0.4h}]]
 plot(p1, p3, p4, p2, p5, layout=l, size=(700, 450), dpi=300)
-#savefig("figs/fig2/fig2.svg")
+savefig("figs/fig2/fig2.pdf")
 ##
 nr_bounds = npzread("data/timelapses/columns/bounds_A.npy")
 nr_radius = reshape(nr_bounds[:,2]-nr_bounds[:,1], (3,12))*0.865
