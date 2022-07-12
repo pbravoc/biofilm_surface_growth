@@ -211,26 +211,26 @@ plot(tf.L)
 strain = "jt305"
 tf = filter(x->x.strain .== strain, pf_boot)
 tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
-p4 = @df tf histogram(:α, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5)
+p4 = @df tf density(:α, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5)
 vline!([tf2.x1], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 30))
-p5 = @df tf histogram(:β, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5)
+p5 = @df tf density(:β, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5)
 vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 48))
-p6 = @df tf histogram(:L, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5, normalized=true)
+p6 = @df tf density(:L, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5, normalized=true)
 vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
-        ylim=(0, 0.25.0))
+        ylim=(0, 25.0))
 ##
 strain = "gob33"
 tf = filter(x->x.strain .== strain, pf_boot)
 tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
-p7 = @df tf histogram(:α, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
+p7 = @df tf density(:α, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
 vline!([tf2.x1], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 90))
-p8 = @df tf histogram(:β, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
+p8 = @df tf density(:β, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
 vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 122))
-p9 = @df tf histogram(:L, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
+p9 = @df tf density(:L, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
 vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 6.11))
 ##

@@ -98,8 +98,6 @@ def getcleansurf(img):
     f[np.isinf(f)] = np.nan
     return f
 
-# %%
-
 #%%
 files = ["/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_001.datx",
 "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_004.datx",
