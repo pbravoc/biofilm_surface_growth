@@ -64,4 +64,4 @@ best_fit = fit_data(df.time, df.avg_height)
 data = boot_fit(df, 1000)
 parameters_frame = DataFrame("α"=>data[:,1], "β"=>data[:,2], "L"=>data[:,3])
 parameters_frame.h_max = parameters_frame.α .* parameters_frame.L ./ parameters_frame.β
-CSV.write("data/sims/bootstrap/boot_"*strain_name*".csv", parameters_frame)
+CSV.write("data/sims/bootstrap/boot_"*strain_name*"local.csv", parameters_frame)

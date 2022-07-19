@@ -41,39 +41,53 @@ p1 = @df gf_summary scatter(:α_mean, :β_mean, group=:strain,
                             yerror=(:β_mean - :β_ql, :β_qh - :β_mean), 
                             legend=false, markersize=5, grid=false,
                             xlabel="α[μm/hr]", ylabel="β[μm/hr]",
-                            title="α-β (R²=0.269)")
+                            title="α-β (R²=0.269)",
+                            xlim=(0.3, 2.0), ylim=(0.005, 0.09))
 p2 = @df gf_summary scatter(:α_mean, :L_mean, group=:strain, 
                             xerror=(:α_mean - :α_ql, :α_qh - :α_mean),
                             yerror=(:L_mean - :L_ql, :L_qh - :L_mean), 
                             legend=false, markersize=5, grid=false,
                             xlabel="α[μm/hr]", ylabel="L[μm]",
-                            title="α-L (R²=0.313)")
+                            title="α-L (R²=0.313)",
+                            xlim=(0.3, 1.5), ylim=(2, 60))
 p3 = @df gf_summary scatter(:β_mean, :L_mean, group=:strain, 
                             xerror=(:β_mean - :β_ql, :β_qh - :β_mean),
                             yerror=(:L_mean - :L_ql, :L_qh - :L_mean), 
                             legend=false, markersize=5, grid=false,
                             xlabel="β[μm/hr]", ylabel="L[μm]",
+                            xlim=(0.005, 0.09), ylim=(2, 60),
                             title="β-L (R²=0.054)")##
-plot(p1, p2, p3, layout=(1,3), size=(700, 250), dpi=500)
-savefig("figs/fig5/parameters_correlation_summary.svg")
 
-##
-p1 = @df df scatter(:α, :β, group=:strain,
-                            legend=false, markersize=5, grid=false,
-                            xlabel="α[μm/hr]", ylabel="β[μm/hr]")
-##                            
-p2 = @df gf_summary scatter(:α_mean, :L_mean, group=:strain, 
-                            xerror=(:α_mean - :α_ql, :α_qh - :α_mean),
-                            yerror=(:L_mean - :L_ql, :L_qh - :L_mean), 
-                            legend=false, markersize=5, grid=false,
-                            xlabel="α[μm/hr]", ylabel="L[μm]")
-p3 = @df gf_summary scatter(:β_mean, :L_mean, group=:strain, 
-                            xerror=(:β_mean - :β_ql, :β_qh - :β_mean),
-                            yerror=(:L_mean - :L_ql, :L_qh - :L_mean), 
-                            legend=false, markersize=5, grid=false,
-                            xlabel="β[μm/hr]", ylabel="L[μm]")##
-plot(p1, p2, p3, layout=(1,3), size=(700, 250))
+p4 = @df df scatter(:α, :β, group=:strain, alpha=0.25,
+                    legend=false, markersize=2, grid=false,
+                    xlabel="α[μm/hr]", ylabel="β[μm/hr]",
+                    xlim=(0.3, 2.0), ylim=(0.005, 0.09),
+                    markerstrokecolor=:auto,
+                    title="α-β (R²=0.017)")                          
+p5 = @df df scatter(:α, :L, group=:strain, alpha=0.25,
+                    legend=false, markersize=2, grid=false,
+                    xlabel="α[μm/hr]", ylabel="L[μm]",
+                    xlim=(0.3, 1.5), ylim=(2, 60),
+                    markerstrokecolor=:auto,
+                    title="α-L (R²=0.067)")
+p6 = @df df scatter(:β, :L, group=:strain, alpha=0.25,
+                    legend=false, markersize=2, grid=false,
+                    xlabel="β[μm/hr]", ylabel="L[μm]",
+                    xlim=(0.005, 0.09), ylim=(2, 60),
+                    markerstrokecolor=:auto,
+                    title="β-L (R²=0.004)")
+plot(p1, p2, p3, p4, p5, p6, layout=(2,3), size=(700, 450), dpi=600)
+savefig("figs/fig5/parameters_correlation_summary.png")
+
 ##
 ols_ab = r2(lm(@formula(α  ~ β), df))
 ols_al = r2(lm(@formula(α  ~ L), df))
 ols_bl = r2(lm(@formula(β  ~ L), df))
+##
+@df df scatter(:α, :β, :L, group=:strain, alpha=1,
+                legend=true, markersize=0.3, grid=false,
+                xlabel="α[μm/hr]", ylabel="β[μm/hr]", zlabel="L[μm]",
+                xlim=(0.3, 2.0), ylim=(0.005, 0.09), zlim=(2, 60),
+                markerstrokecolor=:auto, size=(700, 600)) 
+savefig("figs/fig5/parameters_correlation_summary.html")
+       

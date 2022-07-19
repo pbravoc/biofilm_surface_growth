@@ -113,9 +113,9 @@ annotate!(20, 1000, "A")
 my_bgt = h_change("bgt127")
 my_jt = h_change("jt305")
 my_gob = h_change("gob33")
-bgt_3p = dh_3p(df, "bgt127")
-jt_3p = dh_3p(df, "jt305")
-gob_3p = dh_3p(df, "gob33")
+bgt_3p = dh_3p(df_long, "bgt127")
+jt_3p = dh_3p(df_long, "jt305")
+gob_3p = dh_3p(df_long, "gob33")
 p2 = plot()
 annotate!(880, 11, "B")
 
@@ -137,15 +137,12 @@ scatter!(gob_3p[1], gob_3p[3], xerror=gob_3p[2],yerror=gob_3p[4],color=my_colors
 ## 48h behavior - zoom
 strain = "bgt127"
 tf = df_48[df_48.strain .== strain, :]
-
 p3 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
 @df tf plot!(:avg_height, :interface_long, color=my_colors[2], linewidth=3)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
 annotate!(125, -35, "Data [μm]", 8)
 annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
 annotate!(50, 230, "C")
-
-#
 strain = "jt305"
 tf = df_48[df_48.strain .== strain, :]
 p4 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
@@ -153,9 +150,6 @@ p4 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
 annotate!(125, -35, "Data [μm]", 8)
 annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
-
-
-#
 strain = "gob33"
 tf = df_48[df_48.strain .== strain, :]
 p5 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
@@ -170,24 +164,7 @@ plot(p3, p4, p5, layout=grid(1,3), grid=false, size=(400, 0.8*150))
 l = @layout [a{0.6w} [b{0.75h}
                      grid(1,3)] ]
 plot(p1, p2, p3, p4, p5, layout=l, size=(750, 350), left_margin=3mm, bottom_margin=3mm, grid=false)
-savefig("figs/fig4/fig4_new.svg")
-
-##
-my_bgt = h_change("bgt127")
-my_jt = h_change("jt305")
-my_gob = h_change("gob33")
-p2 = plot(my_bgt[1][1], my_bgt[1][2], color=my_colors[2], label="Aeromonas", linewidth=3)
-plot!(my_bgt[2][1], my_bgt[2][2], color=my_colors[2], linestyle=:dash, label=false, linewidth=3)
-plot!(my_jt[1][1], my_jt[1][2], color=my_colors[3], label="E coli", linewidth=3)
-plot!(my_jt[2][1], my_jt[2][2], color=my_colors[3], linestyle=:dash, label=false, linewidth=3)
-plot!(my_gob[1][1], my_gob[1][2], color=my_colors[4], label="Yeast(aa)", linewidth=3)
-plot!(my_gob[2][1], my_gob[2][2], color=my_colors[4], linestyle=:dash, label=false, linewidth=3)
-plot!(xlabel="Height [μm]", ylabel="ΔHeight [μm/hr]", grid=false, legend=false)
-##
-l = @layout [a{0.6w} [b{0.8h} 
-                      grid(1,3)]] 
-plot(p1, p2, p3, p4, p5, layout=l, size=(750, 350), left_margin=3mm, bottom_margin=3mm, grid=false)
-
+#savefig("figs/fig4/fig4_new.svg")
 
 ## Supplemental Figure 1
 pf_boot = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
@@ -206,8 +183,7 @@ vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
 p3 = @df tf density(:L, color=:black, linewidth=2, fillcolor=my_colors[2], fill=true, fillalpha=0.5)
 vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 1.2))
-plot(tf.L)
-##        
+#   
 strain = "jt305"
 tf = filter(x->x.strain .== strain, pf_boot)
 tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
@@ -219,8 +195,8 @@ vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 48))
 p6 = @df tf density(:L, color=:black, linewidth=2, fillcolor=my_colors[3], fill=true, fillalpha=0.5, normalized=true)
 vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
-        ylim=(0, 25.0))
-##
+        ylim=(0, 0.22))
+#
 strain = "gob33"
 tf = filter(x->x.strain .== strain, pf_boot)
 tf2 = filter(x->x.strain .== strain && x.fit .== "long", pf_best)
@@ -233,30 +209,87 @@ vline!([tf2.x2], color=:black, linewidth=3, linestyle=:dash,
 p9 = @df tf density(:L, color=:black, linewidth=2, fillcolor=my_colors[4], fill=true, fillalpha=0.5)
 vline!([tf2.x3], color=:black, linewidth=3, linestyle=:dash,
         ylim=(0, 6.11))
-##
+#
 plot(p1, p2, p3, p4, p5, p6, p7, p8, p9, legend=false, grid=false, yticks=[])
-##
-pf_boot = filter(x->x.β >0.01 && x.strain in ["bgt127", "jt305", "gob33"], pf_boot)
-@df pf_boot histogram(:L, group=:strain, normalized=true)
-##
-strain = "bgt127"
-tf = df_48[df_48.strain .== strain, :]
-p2 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[2], linewidth=2 )
-plot!(yticks=[-10, 5], legend=false)
+## Bootstrap on h_max
+pf_boot = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
+pf_best = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
+pf_boot = filter(x->x.β >0.01, pf_boot)
+df_boot = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
+df_boot = filter(x->x.strain in ["bgt127", "jt305", "gob33"] && 
+                    x.β > 0, pf_boot)
+df_best = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
+max_heights = df_best.x1 .* df_best.x3 ./ df_best.x2
+mh_48 = max_heights[[1,3,2]]
+mh_all = max_heights[[37,39,38]]
+gf = groupby(df_boot, :strain)
+percentage_border = 0.025
+ql(x) = round(quantile(x, [percentage_border])[1], digits=3) # Quantile low
+qh(x) = round(quantile(x, [1-percentage_border][1]), digits=3) # Quantile high
+gf_summary = combine(gf, [:h_max=>ql, :h_max=>qh])
+gf_summary.h48 = mh_48
+gf_summary.range = gf_summary.h_max_qh - gf_summary.h_max_ql
+gf_summary.range_percentage = 100*gf_summary.range ./ gf_summary.h48
+print(gf_summary)
+@df df_boot violin(:strain, :h_max, color=:black, fillalpha=0.2, label="Bootstrap")
+scatter!([0.5, 1.5 , 2.5], mh_48, markersize=5, color=:black, marker=:circle, label="48h")
+scatter!([0.5, 1.5 , 2.5], mh_all, markersize=5, color=ColorSchemes.okabe_ito[1], marker=:utriangle, label="All")
+plot!(ylim=(0, 1000), size=(300, 400), xrotation=45, grid=false, 
+      xticks=([.5, 1.5, 2.5],["Aeromonas", "Yeast (aa)", "E. coli"]),
+      ylabel="Maximum height [μm]", left_margin=3mm)
+#savefig("figs/fig4/hmax_bootstrap.svg")
+## 88h timelapse parameters
+df = DataFrame(CSV.File("data/sims/bootstrap/time_jt305_unbounded.csv"))
+df.h_max = df.α .* df.L ./ df.β
+df_best = filter(x->x.id == "best", df)
+df = filter(x->x.α .> 0 && x.β > 0 && x.L > 0, df)
+gf = groupby(df, :time)
+percentage_border = 0.1
+ql(x) = round(quantile(x, [percentage_border])[1], digits=3) # Quantile low
+qh(x) = round(quantile(x, [1-percentage_border][1]), digits=3) # Quantile high
+gf = combine(gf, [:α=>ql, :α=>qh,
+                          :β=>ql, :β=>qh,
+                          :L=>ql, :L=>qh,
+                          :h_max=>ql, :h_max=>qh])
+rel = 0.01*df_best.α[end]
+p1 = @df gf plot(:time, :α_ql, fillrange=:α_qh, 
+                 linewidth=0, fillalpha=0.5, color=:gray, label=false,
+                 xlabel="Time [hr]", ylabel="α [μm/hr]")
+@df gf plot!(twinx(), :time, :α_ql/rel, fillrange=:α_qh/rel, 
+             linewidth=0, fillalpha=0.0, color=:gray, xticks=[],
+             label=false, ylabel="%", yguidefontrotation=90)
+@df df_best plot!(:time, :α, linewidth=3, color=:black, label=false)
+plot!(left_margin=3mm, right_margin=20mm)
 
-strain = "jt305"
-tf = df_48[df_48.strain .== strain, :]
-p3 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[3], linewidth=2 )
-plot!(yticks=[-6, 6], legend=false)
 
-strain = "gob33"
-tf = df_48[df_48.strain .== strain, :]
-p4 = @df tf plot(:time, :avg_height-:avg_height, ribbon=:std_height, color=:gray)
-@df tf plot!(:time, :interface_long-:avg_height, color=my_colors[4], linewidth=2 )
-plot!(yticks=[-10, 10], legend=false)
+rel = 0.01*df_best.β[end]
+p2 = @df gf plot(:time, :β_ql, fillrange=:β_qh, 
+                 linewidth=0, fillalpha=0.5, color=:gray, label=false,
+                 xlabel="Time [hr]", ylabel="β [μm/hr]")
+@df gf plot!(twinx(), :time, :β_ql/rel, fillrange=:β_qh/rel, 
+             linewidth=0, fillalpha=0.0, color=:gray, xticks=[],
+             label=false, ylabel="%", yguidefontrotation=90)
+@df df_best plot!(:time, :β, linewidth=3, color=:black, label=false)
+plot!(left_margin=3mm, right_margin=20mm)
 
-p_supp = plot(p2, p3, p4, layout=(1,3), size=(700, 80), bottom_margin=3mm, left_margin=3mm)
+rel = 0.01*df_best.L[end]
+p3 = @df gf plot(:time, :L_ql, fillrange=:L_qh, 
+                 linewidth=0, fillalpha=0.5, color=:gray, label=false,
+                 xlabel="Time [hr]", ylabel="L [μm]")
+@df gf plot!(twinx(), :time, :L_ql/rel, fillrange=:L_qh/rel, 
+             linewidth=0, fillalpha=0.0, color=:gray, xticks=[],
+             label=false, ylabel="%", yguidefontrotation=90)
+@df df_best plot!(:time, :L, linewidth=3, color=:black, label=false)
+plot!(left_margin=3mm, right_margin=20mm)
 
-##
+rel = 0.01*df_best.h_max[end]
+p4 = @df gf plot(:time, :h_max_ql, fillrange=:h_max_qh, 
+                 linewidth=0, fillalpha=0.5, color=:gray, label=false,
+                 xlabel="Time [hr]", ylabel="h max [μm]")
+@df gf plot!(twinx(), :time, :h_max_ql/rel, fillrange=:h_max_qh/rel, 
+             linewidth=0, fillalpha=0.0, color=:gray, xticks=[],
+             label=false, ylabel="%", yguidefontrotation=90)
+@df df_best plot!(:time, :h_max, linewidth=3, color=:black, label=false)
+plot!(left_margin=3mm, right_margin=20mm)
+plot(p1, p2, p3, p4, layout=(4,1), size=(500, 600), grid=false)
+#savefig("figs/fig4/bootstrap_88.pdf")

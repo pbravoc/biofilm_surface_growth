@@ -43,7 +43,7 @@ Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x->x.strain .== "bgt127" && 
                x.time .<= 48 && x.replicate =="A", Df)
 pf = DataFrame(CSV.File("data/sims/f3a_heights_bounded.csv"))
-pf = DataFrame(CSV.File("data/sims/f3a_heights_unbounded.csv"))
+#pf = DataFrame(CSV.File("data/sims/f3a_heights_unbounded.csv"))
 
 myc = [ColorSchemes.gray1[1], ColorSchemes.okabe_ito[1],
                  ColorSchemes.okabe_ito[2], ColorSchemes.okabe_ito[3]] #okabe&ito(2002)
@@ -70,7 +70,7 @@ bar!(#["Nutrient (n)", "Logistic (n)", "Interface (n)", "Logistic", "Interface"]
      inset = (1, bbox(0.535, 0.72, 0.43, 0.25)),subplot=2, title="RMSE [μm]",
      titlefontsize=10, grid=false)
 plot!(size=(400, 300))
-savefig("figs/fig3/fig3_unbounded.pdf")
+#savefig("figs/fig3/fig3_unbounded.pdf")
 
 ##
 p2 = @df pf plot(:time, :data - :data, color=myc[1], linestyle=:dash, ribbon=:data_error, fillalpha=0.2, label=false)
@@ -83,6 +83,8 @@ p2 = @df pf plot(:time, :data - :data, color=myc[1], linestyle=:dash, ribbon=:da
 plot!(xlabel="Time [hr]", ylabel="Residual [μm]", legend=false)
 
 annotate!(45, 25, "B")
+##
+mean(abs.(pf.interface_n - pf.data))
 ##
 #plot!(inset = (1, bbox(0.35, 0.6, 0.3, 0.35)), subplot=2)
 #@df pf scatter!(:data, :nutrient_n, color=3, markersize=2, markerstrokecolor=:auto, label="nutrient_n", subplot=2)
