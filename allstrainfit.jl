@@ -79,8 +79,8 @@ u_list = [0.1]
 P = []
 Strain = []
 Fit = []
-U = []
-## Vary the starting condition
+#U = []
+#= Vary the starting condition
 for strain in strain_list 
     println(strain)
     df = filter(x-> x.strain .== strain && x.time .<48 &&
@@ -94,7 +94,7 @@ for strain in strain_list
         append!(U, [u])
     end
 end
-##
+=#
 # Get the best fits for less than 48h 
 for strain in strain_list 
     println(strain)
@@ -104,7 +104,7 @@ for strain in strain_list
     append!(Strain, [strain])
     append!(Fit, ["48h"])
 end
-##
+#
 # Get the best fits for each timelapse
 for strain in strain_list 
     println(strain)
@@ -132,51 +132,9 @@ for strain in strain_list
     append!(Fit, ["long"])
 end
 ##
-pf = hcat(DataFrame("strain"=>Strain, "fit"=>Fit, "u0"=>U),
+pf = hcat(DataFrame("strain"=>Strain, "fit"=>Fit),#, "u0"=>U),
           DataFrame(Matrix(reduce(hcat, P)'), :auto))
 ## Save to file
-CSV.write("data/timelapses/fit_params_interfacev2.csv", pf)
+CSV.write("data/timelapses/fit_params_interface.csv", pf)
 
- 
-##
-using Plots, StatsPlots, ColorSchemes, Colors
-
-my_colors = [ColorSchemes.okabe_ito[8], ColorSchemes.okabe_ito[5],
-             ColorSchemes.okabe_ito[4], ColorSchemes.okabe_ito[6]]
-pf.h = pf.x1 .* pf.x3 ./ pf.x2
-@df pf scatter(:u0, :h, group=:strain, ylabel="Predicted Height [μm]", xlabel="Starting Height [μm]",
-               size=(350, 300), ylim=(0, 610), color=[my_colors[2], my_colors[4], my_colors[3]]',
-               marker=[:diamond :square :circle],
-               label = ["Aeromonas" "Yeast (aa)" "E coli"],
-               legend=:bottomright, markersize=3, dpi=500)
-savefig("figs/fig3/starting_conditions.png")
-
-##
-function fit_data(t_data, h_data, model, u0=[0.1], pguess=[0.8, 0.05, 15.0])# pguess=[0.8, 0.05, 15.0]) # 
-    idxs = sortperm(t_data)  # Sort time indexes
-    t_data, h_data = t_data[idxs], h_data[idxs]
-    prob = ODEProblem(model, u0, (0.0, t_data[end]), pguess)
-    function loss(p)
-        sol = solve(prob, Tsit5(), p=p, saveat=t_data, save_idxs=1) # Force time savings to match data
-        sol_array = reduce(vcat, sol.u)
-        loss = sum(abs2, sol_array .- h_data)
-        return loss, sol
-    end 
-    result_ode = DiffEqFlux.sciml_train(loss, pguess)
-    return result_ode
-end 
-##
-df = filter(x-> x.strain .== "bgt127" && x.time .<48, Df)
-pguess=[0.8, 0.05, 15.0]              
-idxs = sortperm(df.time)  # Sort time indexes
-t_data, h_data = df.time[idxs], df.avg_height[idxs]
-prob = ODEProblem(interface, [0.1], (0.0, t_data[end]), pguess)
-function loss(p)
-    sol = solve(prob, Tsit5(), p=p, saveat=t_data, save_idxs=1) # Force time savings to match data
-    sol_array = reduce(vcat, sol.u)
-    loss = sum(abs2, sol_array .- h_data)
-    return loss, sol
-end 
-##
-result_ode = Optimization.solve(loss, pguess)
 ##

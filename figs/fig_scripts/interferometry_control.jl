@@ -83,11 +83,11 @@ append!(heights_error, [[std(tf[final_index[1:3],:].avg_height),
                         std(tf[final_index[4:6],:].avg_height)]])
 append!(comparison_time, mean(tf[final_index, :].time))
 ##
-nam = ["Aeromonas", "E. coli", "Yeast (aa)", "Yeast", "V. cholerae (wt)", "V. cholerae (EPS-)", "Klebsiella", "B. cereus", "S. aureus"]
+nam = ["A. veronii", "E. coli", "S. cerevisiae (aa)", "S. cerevisiae", "V. cholerae (wt)", "V. cholerae (EPS-)", "K. pneumoniae", "B. cereus", "S. aureus"]
 ctg = repeat(["Interferometry", "Control"], inner = 0)
 #
 groupedbar(nam, reduce(hcat, final_heights)', err=reduce(hcat, heights_error)',
            label = ["Interferometry" "Control"], ylabel="Average Height [μm]", 
            xrotation=40, bottom_margin=3mm, size=(400, 280), grid=false,
-           color=[ColorSchemes.okabe_ito[1] :gray])
-savefig("figs/fig1/interferometry_control.pdf")
+           color=[ColorSchemes.okabe_ito[1] :gray], ylim=(0, 520))
+#savefig("figs/fig1/interferometry_control.pdf")

@@ -54,7 +54,7 @@ Data = DataFrame(strain = String[], time=Float32[], time_error=Float32[],
 ##
 for strain in unique(df.strain)
     sf = DataFrame()
-    print(strain)
+    println(strain)
     # Get average values
     tf = filter(x->x.strain .== strain, df)
     t, t_e, h, h_e = order_average(tf)
@@ -100,4 +100,4 @@ for strain in unique(df.strain)
     append!(Data, sf)
 end
 ##
-CSV.write("data/timelapses/model_predictionsv2.csv", Data)
+CSV.write("data/timelapses/model_predictions.csv", Data)

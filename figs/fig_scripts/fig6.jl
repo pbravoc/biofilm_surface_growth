@@ -21,20 +21,23 @@ gf_summary = combine(gf, [:α=>ql, :α=>qh, :α=>mean,
                           :h_max=>ql, :h_max=>qh])
 print(gf_summary)
 ##
-p1 = @df df boxplot(:strain, :α, outliers=false, group=:strain, ylim=(0.0, 1.5), title="α [μm/hr]")
-p2 = @df df boxplot(:strain, :β, outliers=false, group=:strain, ylim=(0.0, 0.1), title="β [μm/hr]")
-p3 = @df df boxplot(:strain, :L, outliers=false, group=:strain, ylim=(0.0, 70.0), title="L [μm]" )
-p4 = @df df boxplot(:strain, :h_max, outliers=false, group=:strain, ylim=(0.0, 1100.0), title="h_max [μm]")
-plot(p1, p2, p3, p4, legend=false, grid=false, xrotation=50)
-#savefig("figs/fig5/parameters.pdf")
+p1 = @df df boxplot(:strain, :α, outliers=false, group=:strain, ylim=(0.0, 1.5), ylabel="α [1/hr]")
+p2 = @df df boxplot(:strain, :β, outliers=false, group=:strain, ylim=(0.0, 0.12), ylabel="β [1/hr]")
+p3 = @df df boxplot(:strain, :L, outliers=false, group=:strain, ylim=(0.0, 70.0), ylabel="L [μm]" )
+p4 = @df df boxplot(:strain, :h_max, outliers=false, group=:strain, ylim=(0.0, 1100.0), ylabel="h_max [μm]")
+plot(p1, p2, p3, p4, legend=false, layout=(4,1), grid=false, xrotation=50, size=(400, 750), left_margin=5mm)
+savefig("figs/fig5/parameters.svg")
+##
+tf = filter(x->x.strain .== "gob33", df)
+@df tf density(:L)
+
 ##
 @df df scatter(:α, :β, group=:strain, xlim=(0, 3.0))
-##
+
+## Correlations between parameters
 ols_ab = r2(lm(@formula(α_mean  ~ β_mean), gf_summary))
 ols_al = r2(lm(@formula(α_mean  ~ L_mean), gf_summary))
 ols_bl = r2(lm(@formula(β_mean  ~ L_mean), gf_summary))
-
-##
 p1 = @df gf_summary scatter(:α_mean, :β_mean, group=:strain,
                             #series_ann = text.(:strain, :top),
                             xerror=(:α_mean - :α_ql, :α_qh - :α_mean),
@@ -77,7 +80,7 @@ p6 = @df df scatter(:β, :L, group=:strain, alpha=0.25,
                     markerstrokecolor=:auto,
                     title="β-L (R²=0.004)")
 plot(p1, p2, p3, p4, p5, p6, layout=(2,3), size=(700, 450), dpi=600)
-savefig("figs/fig5/parameters_correlation_summary.png")
+#savefig("figs/fig5/parameters_correlation_summary.png")
 
 ##
 ols_ab = r2(lm(@formula(α  ~ β), df))
