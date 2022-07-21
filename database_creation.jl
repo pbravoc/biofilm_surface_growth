@@ -4,7 +4,7 @@ calculates relevant scalar metrics and then saves all into a single
 file for plotting. This database.csv output contains only experimental 
 outputs, no models included. 
 =#
-using DataFrames, NPZ, Arrow, CSV
+using DataFrames, NPZ, CSV
 using Statistics, NaNMath, LsqFit, Glob
 
 function d_height(df)
@@ -112,7 +112,7 @@ Data = DataFrame(file = String[], replicate = String[], time=Float32[], border_l
                  smooth_height = Float32[], slope = Float32[], slope_error= Float32[], order=Int32[])
 ##
 for folder in tl_folders
-    print(folder)
+    println(folder)
     strain_dataframe = add_to_database(rt_folder*"/"*folder*"/")
     strain_dataframe = strain_dataframe[(strain_dataframe.border_l .!= 0), :]
     calculated = calculations(strain_dataframe)

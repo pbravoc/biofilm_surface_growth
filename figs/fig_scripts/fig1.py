@@ -7,8 +7,8 @@ import os
 import matplotlib.gridspec as gridspec
 import matplotlib.patheffects as PathEffects
 from scipy.optimize import curve_fit
+from matplotlib.patches import Rectangle
 
-#%%
 def datx2py(file_name):
     """Loads a .datx into Python, credit goes to gkaplan.
     https://gist.github.com/g-s-k/ccffb1e84df065a690e554f4b40cfd3a"""
@@ -112,7 +112,7 @@ iplot = zi[t:d, l:r]
 cr_2d = subplane(zs[t:d,l:r])
 m, b = 3.1, -1100
 new_img = np.copy(cr_2d)
-x = np.arange(new_img.shape[1])*0.173 -95
+x = np.arange(new_img.shape[1])*0.173 -95 # Subtract a plane
 
 for i in range(new_img.shape[1]):
     new_img[:,i] -= m*x[i] + b
@@ -122,6 +122,7 @@ data = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/dat
 t = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/data/timelapses/2021-06-25_bgt127/times.npy")[0,0:59]
 
 xs = (np.arange(data.shape[1]) - data.shape[1]/2)*0.173
+#xs += 1505 # To align C and D
 
 #%%
 my_cmap = 'inferno'
@@ -129,10 +130,15 @@ my_cmap2 = 'viridis_r'
 fig = plt.figure(figsize=(12, 7), constrained_layout=True)
 spec = fig.add_gridspec(ncols=1, nrows=4, height_ratios=[1, 1, 1, 3])
 
+new_img[25:43, 2750:2856] = np.nan  # scalebar
+iplot[25:43, 2750:2856] = 0    # scalebar
+
 ax1 = plt.subplot(spec[0])
 plt.axis('off')
 ax1.imshow(iplot, cmap="gray", interpolation="none")
 ax1.set_aspect('equal')
+plt.text(0.965, 0.58, '$20 \mu m$', horizontalalignment='center', fontsize=12,
+     verticalalignment='center', color='black', transform=ax1.transAxes)
 plt.text(0.01, 0.75, 'A', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax1.transAxes)
 
@@ -149,6 +155,8 @@ cbar.ax.set_ylabel('Z [$\mu m$]', rotation=90, fontsize=14)
 cbar.set_ticks([0, 2,4])
 cmap = plt.cm.ScalarMappable(norm=norm, cmap=my_cmap)
 cmap.set_array([])
+plt.text(0.965, 0.58, '$20 \mu m$', horizontalalignment='center', fontsize=12,
+     verticalalignment='center', color='white', transform=ax2.transAxes)
 txt = plt.text(0.01, 0.75, 'B', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax2.transAxes)
 txt.set_path_effects([PathEffects.withStroke(linewidth=2, foreground='w')])
@@ -156,8 +164,9 @@ txt.set_path_effects([PathEffects.withStroke(linewidth=2, foreground='w')])
 ax3 = plt.subplot(spec[2])
 plt.plot(x, cr_1d/1000, color="black")
 plt.axhline(0, color='black', linestyle='dashed', alpha=0.1)
+plt.xticks([])
 plt.xlim(x[0], x[-1])
-plt.xlabel("Distance [$\mu m$]", fontsize=14)
+#plt.xlabel("Distance [$\mu m$]", fontsize=14)
 plt.ylabel("Height [$\mu m$]", fontsize=14)
 plt.text(0.01, 0.85, 'C', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax3.transAxes)
@@ -177,6 +186,8 @@ my_colors = [cmap.to_rgba(j) for j in t]
 for i in range(1, data.shape[0]):
     ax4.plot(xs, data[i,:], c=my_colors[i]);
 
+currentAxis = plt.gca()
+
 plt.xlabel("Distance [$\mu m$]", fontsize=14)
 plt.ylabel("Height [$\mu m$]", fontsize=14)
 plt.xticks(fontsize=14)
@@ -184,6 +195,8 @@ plt.yticks(fontsize=14)
 plt.ylim(-2, 165)
 plt.text(0.01, 0.95, 'D', horizontalalignment='center', fontsize=18,
      verticalalignment='center', transform=ax4.transAxes)
+currentAxis.add_patch(Rectangle((-1605, -0.1), 500, 5, facecolor="none", edgecolor='black', linestyle="--", zorder=2))
+
 ##
-plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/large_space.svg") # Big distance between panels, final touches on inkscape.
+plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/fig1.svg") # Big distance between panels, final touches on inkscape.
 # %%

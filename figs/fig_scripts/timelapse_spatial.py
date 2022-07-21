@@ -7,6 +7,7 @@ import os
 import matplotlib.gridspec as gridspec
 import matplotlib.patheffects as PathEffects
 from scipy.optimize import curve_fit
+from matplotlib.patches import Circle
 
 def subplane(img):
     """Substract a plane from the image"""
@@ -98,7 +99,6 @@ def getcleansurf(img):
     f[np.isinf(f)] = np.nan
     return f
 
-#%%
 files = ["/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_001.datx",
 "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_004.datx",
 "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_007.datx",
@@ -108,9 +108,6 @@ files = ["/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/ra
 "/run/media/pablo/T7/Documents/Research/Biofilms/Data/Interferometry/radial_timelapses/2021-06-25_bgt127/Raw/bgt127_019.datx"]
 t = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/data/timelapses/2021-06-25_bgt127/times.npy")[1,1:9]
 
-#files = "/home/pablo/Downloads/bgt127_001.datx"
-#t = np.array([1])
-#%%
 clean_data = []
 for file in files:
     zs, zi = get_data(file)
@@ -118,18 +115,21 @@ for file in files:
     l,r = 10000, 13000
     cr_2d = subplane(zs[t:d,l:r])
     new_img = np.copy(cr_2d)-np.nanmin(cr_2d)
+    new_img[25:43, 2800:2906] = np.nan  # scalebar
     clean_data.append(new_img)
 t = np.load("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/data/timelapses/2021-06-25_bgt127/times.npy")[1,1:9]
-
-fig = plt.figure(figsize=(12, 7), constrained_layout=True)
+#%%
+fig = plt.figure(figsize=(12, 7), constrained_layout=True, facecolor='white')
 spec = fig.add_gridspec(ncols=1, nrows=7)
 for i in range(7):
     ax1 = plt.subplot(spec[i])
     plt.axis('off')
     ax1.imshow(clean_data[i], cmap="viridis", interpolation="none", clim=(0.0, 1000.0))
     ax1.set_aspect('equal')
+    plt.text(0.95, 0.58, '$20 \mu m$', horizontalalignment='center', fontsize=14,
+             verticalalignment='center', color='white', transform=ax1.transAxes)
     txt = plt.text(0.01, 0.75, str(int(t[i]*60))+" minutes", horizontalalignment='left', fontsize=18,
-     verticalalignment='center', transform=ax1.transAxes)
+                   verticalalignment='center', transform=ax1.transAxes)
     txt.set_path_effects([PathEffects.withStroke(linewidth=2, foreground='w')])
 
 norm = plt.Normalize(vmin=0.0, vmax=1000.0)
@@ -141,16 +141,4 @@ cbar.ax.set_ylabel('Z [$n m$]', rotation=90, fontsize=14)
 cbar.set_ticks([0, 200,400, 600, 800, 1000])
 cmap = plt.cm.ScalarMappable(norm=norm, cmap='viridis')
 cmap.set_array([])
-plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/top_view_nanometer.pdf",bbox_inches='tight')
-# %%
-t,d,l,r = 90, 250, 10000, 16000
-zs, zi = get_data(files)
-cr_2d = subplane(zs[t:d,l:r])
-new_img = np.copy(cr_2d)-np.nanmin(cr_2d)
-plt.figure(figsize=(15, 5))
-plt.imshow(new_img, cmap="inferno")
-plt.axis("off")
-plt.tight_layout()
-#plt.colorbar()
-plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/profiles/early_surface.svg")
-# %%
+plt.savefig("/home/pablo/Documents/Yggdrasil/Files/biofilm_surface_growth/figs/fig1/top_view_nanometer.png", dpi=500, bbox_inches='tight')
