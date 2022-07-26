@@ -11,6 +11,7 @@ using DataFrames, CSV
 using Statistics, NaNMath, LsqFit
 using Plots, StatsPlots, Plots.Measures
 using ColorSchemes, Colors
+using GLM 
 
 interface_dh(h, p) = p[1]*min(h, p[3])-p[2]*h
 pf = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
@@ -91,6 +92,11 @@ for strain in strain_list
     qtf.strain = repeat([strain], size(tf)[1])
     append!(qf, qtf)
 end
+
+function my_r2(strain)
+        tf = df_48[df_48.strain .== strain, :]
+        return round(r2(lm(@formula(avg_height  ~ interface_long), tf)), digits=4)
+end
 ## A- Timelapse points
 
 alpha_intensity = 0.1
@@ -101,12 +107,12 @@ plot!(xlabel="Time [hr]", ylabel="Height [μm]", ylim=(0, 1060), legend=:topleft
 @df df_pred[df_pred.strain .== "jt305", :] plot!(:time, :tall, color=my_colors[3], linewidth=3, linestyle=:solid, label=false)
 @df df_pred[df_pred.strain .== "gob33", :] plot!(:time, :tall, color=my_colors[4], linewidth=3, linestyle=:solid, label=false)
 
-@df df_long[df_long.strain .== "bgt127",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[2],markersize=4, markerstrokewidth=1.5, label="Aeromonas")
-@df df_long[df_long.strain .== "jt305",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[3], markersize=4, markerstrokewidth=1.5,marker=:diamond, label="E coli")
-@df df_long[df_long.strain .== "gob33",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[4],markersize=4,markerstrokewidth=1.5, marker=:square,label="Yeast (aa)")
+@df df_long[df_long.strain .== "bgt127",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[2],markersize=4, markerstrokewidth=1.5, label="A. veronii")
+@df df_long[df_long.strain .== "jt305",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[3], markersize=4, markerstrokewidth=1.5,marker=:diamond, label="E. coli")
+@df df_long[df_long.strain .== "gob33",:] scatter!(:time, :avg_height, yerror=:std_height, color=my_colors[4],markersize=4,markerstrokewidth=1.5, marker=:square,label="S. cerevisiae (aa)")
 boot_df = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
 boot_df = filter(x->x.strain in ["bgt127", "jt305", "gob33"], boot_df)
-plot!(legend=(0.23, 0.95), xlim=(0, 336), xticks=Array(0:48:350))
+plot!(legend=(0.18, 0.95), xlim=(0, 336), xticks=Array(0:48:350))
 annotate!(20, 1000, "A")
 
 ## B- dh v h 
@@ -130,12 +136,13 @@ plot!(xlabel="Height [μm]", ylabel="ΔHeight [μm/hr]", grid=false, legend=fals
 #scatter!(bgt_2p[1], bgt_2p[3], xerror=bgt_2p[2], yerror=bgt_2p[4],color=my_colors[2])
 #scatter!(jt_2p[1], jt_2p[3], xerror=jt_2p[2], yerror=jt_2p[4],color=my_colors[3])
 #scatter!(gob_2p[1], gob_2p[3], xerror=gob_2p[2],yerror=jt_2p[4],color=my_colors[4])
-scatter!(bgt_3p[1], bgt_3p[3], xerror=bgt_3p[2], yerror=bgt_3p[4],color=my_colors[2])
-scatter!(jt_3p[1], jt_3p[3], xerror=jt_3p[2], yerror=jt_3p[4],color=my_colors[3], marker=:diamond)
-scatter!(gob_3p[1], gob_3p[3], xerror=gob_3p[2],yerror=gob_3p[4],color=my_colors[4], marker=:square)
+scatter!(bgt_3p[1], bgt_3p[3], xerror=bgt_3p[2], yerror=bgt_3p[4],color=my_colors[2], markersize=3)
+scatter!(jt_3p[1], jt_3p[3], xerror=jt_3p[2], yerror=jt_3p[4],color=my_colors[3], marker=:diamond, markersize=3)
+scatter!(gob_3p[1], gob_3p[3], xerror=gob_3p[2],yerror=gob_3p[4],color=my_colors[4], marker=:square, markersize=2.5)
 
 ## 48h behavior - zoom
 strain = "bgt127"
+str_r2 = my_r2(strain)
 tf = df_48[df_48.strain .== strain, :]
 p3 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
 @df tf plot!(:avg_height, :interface_long, color=my_colors[2], linewidth=3)
@@ -143,22 +150,28 @@ plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270
 annotate!(125, -35, "Data [μm]", 8)
 annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
 annotate!(50, 230, "C")
+annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 strain = "jt305"
+str_r2 = my_r2(strain)
 tf = df_48[df_48.strain .== strain, :]
 p4 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
 @df tf plot!(:avg_height, :interface_long, color=my_colors[3], linewidth=3)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
 annotate!(125, -35, "Data [μm]", 8)
 annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
+annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 strain = "gob33"
+str_r2 = my_r2(strain)
 tf = df_48[df_48.strain .== strain, :]
 p5 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
 @df tf plot!(:avg_height, :interface_long, color=my_colors[4], linewidth=3)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
 annotate!(125, -35, "Data [μm]", 8)
 annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
-
+annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 plot(p3, p4, p5, layout=grid(1,3), grid=false, size=(400, 0.8*150))
+##
+
 
 ##
 l = @layout [a{0.6w} [b{0.75h}
@@ -221,7 +234,7 @@ df_boot = filter(x->x.strain in ["bgt127", "jt305", "gob33"] &&
 df_best = DataFrame(CSV.File("data/timelapses/fit_params_interface.csv"))
 max_heights = df_best.x1 .* df_best.x3 ./ df_best.x2
 mh_48 = max_heights[[1,3,2]]
-mh_all = max_heights[[37,39,38]]
+mh_all = max_heights[[37,38,39]]
 gf = groupby(df_boot, :strain)
 percentage_border = 0.025
 ql(x) = round(quantile(x, [percentage_border])[1], digits=3) # Quantile low
@@ -235,9 +248,9 @@ print(gf_summary)
 scatter!([0.5, 1.5 , 2.5], mh_48, markersize=5, color=:black, marker=:circle, label="48h")
 scatter!([0.5, 1.5 , 2.5], mh_all, markersize=5, color=ColorSchemes.okabe_ito[1], marker=:utriangle, label="All")
 plot!(ylim=(0, 1000), size=(300, 400), xrotation=45, grid=false, 
-      xticks=([.5, 1.5, 2.5],["Aeromonas", "Yeast (aa)", "E. coli"]),
+      xticks=([.5, 1.5, 2.5],["A. veronii", "S. cerevisiae (aa)", "E. coli"]),
       ylabel="Maximum height [μm]", left_margin=3mm)
-#savefig("figs/fig4/hmax_bootstrap.svg")
+savefig("figs/fig4/hmax_bootstrap.svg")
 ## 88h timelapse parameters
 df = DataFrame(CSV.File("data/sims/bootstrap/time_jt305_unbounded.csv"))
 df.h_max = df.α .* df.L ./ df.β
@@ -254,7 +267,7 @@ gf = combine(gf, [:α=>ql, :α=>qh,
 rel = 0.01*df_best.α[end]
 p1 = @df gf plot(:time, :α_ql, fillrange=:α_qh, 
                  linewidth=0, fillalpha=0.5, color=:gray, label=false,
-                 xlabel="Time [hr]", ylabel="α [μm/hr]")
+                 xlabel="Time [hr]", ylabel="α [1/hr]")
 @df gf plot!(twinx(), :time, :α_ql/rel, fillrange=:α_qh/rel, 
              linewidth=0, fillalpha=0.0, color=:gray, xticks=[],
              label=false, ylabel="%", yguidefontrotation=90)
@@ -265,7 +278,7 @@ plot!(left_margin=3mm, right_margin=20mm)
 rel = 0.01*df_best.β[end]
 p2 = @df gf plot(:time, :β_ql, fillrange=:β_qh, 
                  linewidth=0, fillalpha=0.5, color=:gray, label=false,
-                 xlabel="Time [hr]", ylabel="β [μm/hr]")
+                 xlabel="Time [hr]", ylabel="β [1/hr]")
 @df gf plot!(twinx(), :time, :β_ql/rel, fillrange=:β_qh/rel, 
              linewidth=0, fillalpha=0.0, color=:gray, xticks=[],
              label=false, ylabel="%", yguidefontrotation=90)
@@ -292,4 +305,4 @@ p4 = @df gf plot(:time, :h_max_ql, fillrange=:h_max_qh,
 @df df_best plot!(:time, :h_max, linewidth=3, color=:black, label=false)
 plot!(left_margin=3mm, right_margin=20mm)
 plot(p1, p2, p3, p4, layout=(4,1), size=(500, 600), grid=false)
-#savefig("figs/fig4/bootstrap_88.pdf")
+savefig("figs/fig4/bootstrap_88.svg")
