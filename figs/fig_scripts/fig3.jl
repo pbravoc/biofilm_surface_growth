@@ -93,32 +93,43 @@ mean(abs.(pf.interface_n - pf.data))
 #@df pf plot!([0.0, 200.0], [0.0, 200.0], color=:black, alpha=0.5, linestyle=:dash, linewidth=2,legend=false, subplot=2)
 #plot!(xticks=[], yticks=[], subplot=2)
 #
-function plot_slope(y, x, dt, c, l)
+function plot_slope(y, x, dt, c, )
     smooth, slope, slope_error = smooth_heights(y, x, dt)
-    plot!(y, slope, ribbon=slope_error, color=c, label=l, linewidth=2)
+    plot!(y, slope, color=c, label=l, linewidth=2)
 end
 
 dt = 4.0
 h, dh, dh_e = smooth_heights(pf.data, pf.time, dt)
 p3 = plot(xlabel="Height [μm]", ylabel="Δ Height [μm/hr]")
 scatter!(h, dh, xerror=pf.data_error, yerror=dh_e, color=:black, alpha=0.75,
-         markersize=2, label=false)
+         markersize=1.5, label=false)
+sm, sl, se = smooth_heights(pf.nutrient_n, pf.time, dt)
+plot!(sm, sl, color= myc[4], linewidth=2)
+sm, sl, se = smooth_heights(pf.logistic_n, pf.time, dt)
+plot!(sm, sl, color= myc[3], linewidth=2)
+sm, sl, se = smooth_heights(pf.logistic, pf.time, dt)
+plot!(sm, sl, color= myc[3], linewidth=2, linestyle=:dash)
+sm, sl, se = smooth_heights(pf.interface_n, pf.time, dt)
+plot!(sm, sl, color= myc[2], linewidth=2)
+sm, sl, se = smooth_heights(pf.interface_n, pf.time, dt)
+plot!(sm, sl, color= myc[2], linewidth=2, linestyle=:dash)
+
 #vline!([h[findmax(dh)[2]]], color=:black, linestyle=:dash, label=false)
 #hline!([0.0], color=:black, linestyle=:dash, label=false, legend=:right)
-plot_slope(pf.interface, pf.time, dt, myc[2], "I")
-plot_slope(pf.nutrient_n, pf.time, dt, myc[4], "N (n)")
-plot_slope(pf.logistic_n, pf.time, dt, myc[3], "L (n)")
+#plot_slope(pf.interface, pf.time, dt, myc[2], "I")
+#plot_slope(pf.nutrient_n, pf.time, dt, myc[4], "N (n)")
+#plot_slope(pf.logistic_n, pf.time, dt, myc[3], "L (n)")
 #plot!([500.0, 510.0], [[1,1], [2,2], [3,3]], color=[1 2 3], label=["a" "b" "c"])
-plot!(xlim=(-1, 220.0), ylim=(-0.1, 13.0), legend=false)
+plot!(xlim=(-1, 220.0), ylim=(-0.1, 19.0), legend=false)
 #savefiyg("figs/figs_temp/fig3_c.svg")
-annotate!(200, 11.5, "C")
+annotate!(200, 18.5, "C")
 ##
 l = @layout [
     a{0.6w} [b{0.5h}  
              c{0.5h}] 
 ]
 plot(p1, p2, p3, size=(700, 350), layout=l, bottom_margin=4mm, left_margin=3mm, grid=false)
-#savefig("figs/fig3/fig3.pdf")
+savefig("figs/fig3/fig3_all.svg")
 
 ##
 

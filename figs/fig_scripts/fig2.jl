@@ -51,7 +51,7 @@ annotate!(2, 205, "A")
 p2 = @df df plot(:avg_height, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false, color=my_colors,
-            marker=:circle, markersize=3, markerstrokecolor=:auto,
+            marker=:circle, markersize=2, markerstrokecolor=:auto,
             xlabel="Height [μm]", ylabel="Δ Height [μm/hr]",
             linewidth=2)
 p2 = vline!([27.5], color=ColorSchemes.okabe_ito[1], linewidth=3,linestyle=:dash, legend=false)
@@ -96,7 +96,7 @@ bar!([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], labe
 =#
 p4 = bar([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], 
          label=false, xticks=([1,2], ["NR", "R"]), color=[:gray, ColorSchemes.okabe_ito[1]], 
-         yticks=[], ylabel="Total Height [μm]", grid=false, ylim=(0, 550))
+        ylabel="Total Height [μm]", grid=false, ylim=(0, 550))
 annotate!(0.94, 505, "D")
 annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90, color=:black))
 annotate!(2, 15, text("462.1 μm", 6, "courier", :left, rotation=90, color=:black))
@@ -113,7 +113,7 @@ l = @layout [[a{0.6h}
               b{0.7w} c{0.3w}] [d{0.6h}
                         e{0.4h}]]
 plot(p1, p3, p4, p2, p5, layout=l, size=(700, 450), dpi=300)
-savefig("figs/fig2/fig2.svg")
+savefig("figs/fig2/fig2_new.svg")
 ##
 nr_bounds = npzread("data/timelapses/columns/bounds_A.npy")
 nr_radius = reshape(nr_bounds[:,2]-nr_bounds[:,1], (3,12))*0.865

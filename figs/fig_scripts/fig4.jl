@@ -127,49 +127,51 @@ annotate!(880, 11, "B")
 
 hline!([0.0], color=:black, linewidth=2, style=:dash, alpha=0.5)
 plot!(my_bgt[1][1], my_bgt[1][2], color=my_colors[2], label="Aeromonas", linewidth=3)
-plot!(my_bgt[2][1], my_bgt[2][2], color=my_colors[2], linestyle=:dash, label=false, linewidth=3)
+plot!(my_bgt[2][1], my_bgt[2][2], color=my_colors[2], label=false, linewidth=3)
 plot!(my_jt[1][1], my_jt[1][2], color=my_colors[3], label="E coli", linewidth=3)
-plot!(my_jt[2][1], my_jt[2][2], color=my_colors[3], linestyle=:dash, label=false, linewidth=3)
+plot!(my_jt[2][1], my_jt[2][2], color=my_colors[3], label=false, linewidth=3)
 plot!(my_gob[1][1], my_gob[1][2], color=my_colors[4], label="Yeast(aa)", linewidth=3)
-plot!(my_gob[2][1], my_gob[2][2], color=my_colors[4], linestyle=:dash, label=false, linewidth=3)
+plot!(my_gob[2][1], my_gob[2][2], color=my_colors[4], label=false, linewidth=3)
 plot!(xlabel="Height [μm]", ylabel="ΔHeight [μm/hr]", grid=false, legend=false, xlim=(0, 950))
 #scatter!(bgt_2p[1], bgt_2p[3], xerror=bgt_2p[2], yerror=bgt_2p[4],color=my_colors[2])
 #scatter!(jt_2p[1], jt_2p[3], xerror=jt_2p[2], yerror=jt_2p[4],color=my_colors[3])
 #scatter!(gob_2p[1], gob_2p[3], xerror=gob_2p[2],yerror=jt_2p[4],color=my_colors[4])
-scatter!(bgt_3p[1], bgt_3p[3], xerror=bgt_3p[2], yerror=bgt_3p[4],color=my_colors[2], markersize=3)
-scatter!(jt_3p[1], jt_3p[3], xerror=jt_3p[2], yerror=jt_3p[4],color=my_colors[3], marker=:diamond, markersize=3)
-scatter!(gob_3p[1], gob_3p[3], xerror=gob_3p[2],yerror=gob_3p[4],color=my_colors[4], marker=:square, markersize=2.5)
+scatter!(bgt_3p[1], bgt_3p[3], xerror=bgt_3p[2], yerror=bgt_3p[4],color=my_colors[2], markersize=2)
+scatter!(jt_3p[1], jt_3p[3], xerror=jt_3p[2], yerror=jt_3p[4],color=my_colors[3], marker=:diamond, markersize=2)
+scatter!(gob_3p[1], gob_3p[3], xerror=gob_3p[2],yerror=gob_3p[4],color=my_colors[4], marker=:square, markersize=2)
 
 ## 48h behavior - zoom
 strain = "bgt127"
 str_r2 = my_r2(strain)
 tf = df_48[df_48.strain .== strain, :]
 p3 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
-@df tf plot!(:avg_height, :interface_long, color=my_colors[2], linewidth=3)
+@df tf plot!(:interface_long, :avg_height, color=my_colors[2], linewidth=3)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
-annotate!(125, -35, "Data [μm]", 8)
-annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
+annotate!(125, -35, "Model Height [μm]", 8)
+annotate!(-40, 135, Plots.text("Height [μm]", 8, rotation = 90 ))
 annotate!(50, 230, "C")
 annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 strain = "jt305"
 str_r2 = my_r2(strain)
 tf = df_48[df_48.strain .== strain, :]
 p4 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
-@df tf plot!(:avg_height, :interface_long, color=my_colors[3], linewidth=3)
+@df tf plot!(:interface_long, :avg_height, color=my_colors[3], linewidth=3)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
-annotate!(125, -35, "Data [μm]", 8)
-annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
+annotate!(125, -35, "Model Height [μm]", 8)
+annotate!(-40, 135, Plots.text("Height [μm]", 8, rotation = 90 ))
 annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 strain = "gob33"
 str_r2 = my_r2(strain)
 tf = df_48[df_48.strain .== strain, :]
 p5 = plot([0, 300], [0, 300], color=:gray, linestyle=:dash)
-@df tf plot!(:avg_height, :interface_long, color=my_colors[4], linewidth=3)
+@df tf plot!(:interface_long, :avg_height, color=my_colors[4], linewidth=3)
 plot!(xlim=(0, 270), ylim=(0, 270), legend=false, xticks=[0, 270], yticks=[0,270])
-annotate!(125, -35, "Data [μm]", 8)
-annotate!(-40, 135, Plots.text("Model [μm]", 8, rotation = 90 ))
+annotate!(125, -35, "Model Height [μm]", 8)
+annotate!(-40, 135, Plots.text("Height [μm]", 8, rotation = 90 ))
 annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 plot(p3, p4, p5, layout=grid(1,3), grid=false, size=(400, 0.8*150))
+savefig("figs/fig4/fig4_r2.svg")
+
 ##
 
 
@@ -177,7 +179,7 @@ plot(p3, p4, p5, layout=grid(1,3), grid=false, size=(400, 0.8*150))
 l = @layout [a{0.6w} [b{0.75h}
                      grid(1,3)] ]
 plot(p1, p2, p3, p4, p5, layout=l, size=(750, 350), left_margin=3mm, bottom_margin=3mm, grid=false)
-#savefig("figs/fig4/fig4_new.svg")
+savefig("figs/fig4/fig4.svg")
 
 ## Supplemental Figure 1
 pf_boot = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
