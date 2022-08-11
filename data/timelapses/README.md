@@ -12,6 +12,6 @@
 | *Bacillus cereus*  | SW520           | SW520            | 
 | *Staphylococcus aureus*  | SW519           | SW519            | 
 
-
+The `internal name` corresponds to the abbreviation used during data processing and analysis.
 
 
