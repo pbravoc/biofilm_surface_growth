@@ -38,15 +38,15 @@ for i=1:9
     rmse_logistic = round(sqrt(mean((tf.avg_height - tf.logistic).^2)), digits=2)
     str_interface = string("RMSE=", rmse_interface, "μm")
     str_logistic = string("RMSE=", rmse_logistic, "μm")
-    @df tf plot!(:time, :interface, linewidth=3, color=ColorSchemes.okabe_ito[1], subplot=i)
-    annotate!((0.06, 0.81), text(str_interface, :black, :left, "Helvetica", 6), subplot=i)
-    #@df tf plot!(:time, :logistic, linewidth=3, color=ColorSchemes.okabe_ito[2], subplot=i)
-    #annotate!((0.06, 0.81), text(str_logistic, :black, :left, "Helvetica", 6), subplot=i)
+    #@df tf plot!(:time, :interface, linewidth=3, color=ColorSchemes.okabe_ito[1], subplot=i)
+    #annotate!((0.06, 0.81), text(str_interface, :black, :left, "Helvetica", 6), subplot=i)
+    @df tf plot!(:time, :logistic, linewidth=3, color=ColorSchemes.okabe_ito[2], subplot=i)
+    annotate!((0.06, 0.81), text(str_logistic, :black, :left, "Helvetica", 6), subplot=i)
     annotate!((0.06, 0.74), text(str_N, :black, :left, "Helvetica", 6), subplot=i)
     plot!(xlabel="Time [hr]", ylabel="Height [μm]", subplot=i, legend=false)
 end 
 plot(P, bottom_margin=3mm, left_margin=5mm, grid=false, background_color=:white)
-savefig("figs/fig5/fig5_interface_N.svg")
+savefig("figs/fig5/fig5_logistic_N.svg")
 
 ## RMSE bar plot
 RMSE_logistic = []
