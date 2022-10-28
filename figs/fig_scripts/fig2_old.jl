@@ -101,31 +101,19 @@ annotate!(0.94, 505, "D")
 annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90, color=:black))
 annotate!(2, 15, text("462.1 μm", 6, "courier", :left, rotation=90, color=:black))
 
-# Old plot, with derivations ignoring consumption.
 p5 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:gray, linewidth=3, label="Concentration", size=(400, 400), xlim=(0,2))
 plot!(x, sol_ana ./ maximum(sol_ana), color=ColorSchemes.okabe_ito[1], linewidth=3, label="Cumulative", xlim=(0,2))
 plot!(x, sol_dis ./ maximum(sol_dis), color=ColorSchemes.okabe_ito[1],  linewidth=3,linestyle=:dash,label="Approximation")
 vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, )
 xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200), yticks=[])
 annotate!(0.12, 0.96, "E")
-##
-df = DataFrame(CSV.File("data/sims/monod_diffusion.csv"))
-p5 = @df df plot(:X, :Concentration, color=:gray,linestyle=:dash, linewidth=2.5,
-                 label="Concentration")
-@df df plot!(:X, :Monod, color=:gray, linewidth=2.5, label="Monod")
-@df df plot!(:X, :Sum_growth, color=ColorSchemes.okabe_ito[1], linewidth=2.5, 
-             label="Total Growth")
-@df df plot!(:X, :Approximation, color=ColorSchemes.okabe_ito[1], 
-             linewidth=2.5, linestyle=:dash, label="Approximation")
-plot!(xticks=([0, 10, 20, 30, 40, 50], ["0L", "L", "2L", "3L", "4L", "5L"]), 
-      xlim=(0, 20), grid=false, legend=:right, xlabel="Distance from interface",
-      ylabel="Normalized value")
-##
+
+#savefig("figs/fig2/2_conconly.svg")
 l = @layout [[a{0.6h}
               b{0.7w} c{0.3w}] [d{0.6h}
                         e{0.4h}]]
 plot(p1, p3, p4, p2, p5, layout=l, size=(700, 450), dpi=300)
-savefig("figs/fig2/fig2_monod.svg")
+savefig("figs/fig2/fig2_new.svg")
 ##
 nr_bounds = npzread("data/timelapses/columns/bounds_A.npy")
 nr_radius = reshape(nr_bounds[:,2]-nr_bounds[:,1], (3,12))*0.865
