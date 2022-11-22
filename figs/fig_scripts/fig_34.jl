@@ -154,7 +154,7 @@ annotate!((0.65, 0.16), text("R²=$str_r2", 7))
 plot(p4, p5, p6, layout=grid(1,3), grid=false, size=(400, 0.8*150))
 ##
 l = @layout [[a{0.8h}
-               b    ] [c{0.75h}
+               b    ] [c{0.8h}
                      grid(1,3)] ]
 plot(p1, p2, p3, p4, p5, p6, layout=l, size=(600, 350))
-savefig("fig34_new.svg")
+savefig("/localdata/Pablo/vertical_growth_biofilms/figs/fig3/fig34_new.svg")
