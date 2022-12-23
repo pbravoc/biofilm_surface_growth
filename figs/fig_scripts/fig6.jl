@@ -8,11 +8,14 @@ using DataFrames, CSV
 using Statistics
 using Plots, StatsPlots, Plots.Measures
 using ColorSchemes
-
+##
 df = DataFrame(CSV.File("data/sims/bootstrap/all_bootstrap.csv"))
 df = filter(x->x.α .> 0 && x.β .>0 && x.L .>0, df)
 gf = groupby(df, :strain)
-percentage_border = 0.1
+##
+
+##
+percentage_border = 0.025
 ql(x) = round(quantile(x, [percentage_border])[1], digits=3) # Quantile low
 qh(x) = round(quantile(x, [1-percentage_border][1]), digits=3) # Quantile high
 gf_summary = combine(gf, [:α=>ql, :α=>qh, :α=>mean,
@@ -26,7 +29,7 @@ p2 = @df df boxplot(:strain, :β, outliers=false, group=:strain, ylim=(0.0, 0.12
 p3 = @df df boxplot(:strain, :L, outliers=false, group=:strain, ylim=(0.0, 70.0), ylabel="L [μm]" )
 p4 = @df df boxplot(:strain, :h_max, outliers=false, group=:strain, ylim=(0.0, 1100.0), ylabel="h_max [μm]")
 plot(p1, p2, p3, p4, legend=false, layout=(4,1), grid=false, xrotation=50, size=(400, 750), left_margin=5mm)
-savefig("figs/fig5/parameters.svg")
+#savefig("figs/fig5/parameters.svg")
 ##
 tf = filter(x->x.strain .== "gob33", df)
 @df tf density(:L)
