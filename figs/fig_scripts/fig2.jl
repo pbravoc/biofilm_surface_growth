@@ -4,30 +4,10 @@ using Plots, StatsPlots, ColorSchemes, Plots.Measures
 using SpecialFunctions
 
 G(z, zstar) = z < zstar ? z : zstar
-function c(x, t)
-    L = sqrt(D*t)
-    return erfc.(x / L)
-end
-function int_c(h)
-    L = sqrt(D*dt)
-    t1 = L*(-exp.(-h^2 / (L^2)))
-    t2 = sqrt(π) * h * erfc(h/L)
-    return (t1 + t2 + L)
-end
 
 Df =  DataFrame(CSV.File("data/timelapses/database.csv"))
 df = filter(x->x.strain .== "bgt127" && 
                x.time .<= 48 && x.replicate in ["A", "B", "C"], Df)
-x = Array(0.0:0.05:3.0)
-D = 0.3
-dt = 1.0
-y = exp.(-D*x)
-myc = c(x, dt)
-a = int_c(0.1)
-sol_dis = cumsum(c(x, dt)) .- 1
-sol_ana = int_c.(x)
-sol_dis = G.(x, sqrt(D*dt))
-#
 my_colors = [colorant"#B3B3B3", colorant"#808080", colorant"#4D4D4D"]'
 #
 p1 = @df df plot(:time, :avg_height, group=:replicate,
@@ -58,7 +38,8 @@ p2 = vline!([27.5], color=ColorSchemes.okabe_ito[1], linewidth=3,linestyle=:dash
 p2 = annotate!(20, 1, text("I", 8, "courier"))
 p2 = annotate!(40, 1, text("II", 8, "courier"))
 annotate!(5, 12, "B")
-##
+## Supplemnetal?
+#=
 @df df plot(:time, :slope, group=:replicate,
             fillalpha=0.3, alpha=0.8,
             ribbon=:slope_error, grid=false,
@@ -71,6 +52,7 @@ annotate!(5.5, 1, text("I", 12, "courier"))
 annotate!(11, 1, text("II", 12, "courier"))
 plot!(size=(400, 250))
 #savefig("figs/fig2/fig2_time.pdf")
+=#
 ##
 nr_profiles = npzread("data/timelapses/columns/profiles_nr.npy")
 nr_heights = [NaNMath.mean(nr_profiles[i,:4000:6000]) for i=1:36]
@@ -83,11 +65,12 @@ plot!(r_heights, color=2, marker=:diamond)
 plot!(legend=false, grid=false)
 nr_h, nr_e = mean(nr_heights, dims=2), std(nr_heights, dims=2)
 r_h, r_e = mean(r_heights, dims=2), std(r_heights, dims=2)
-p3 = plot([nr_h, r_h], yerror=[nr_e r_e], marker=[:circle :diamond], markersize=5,  linewidth=3,color=[:gray ColorSchemes.okabe_ito[1]],
-          label=["NR" "R"])
-plot!(legend=(0.15, 0.25), ylim=(0, 320), xticks=[1,2,3], xlabel="Iteration", ylabel="Height [μm]", grid=false)
+##
+p3 = plot([nr_h, r_h], yerror=[nr_e r_e], 
+          linewidth=3, color=[:gray ColorSchemes.okabe_ito[1]], label=["NR" "R"])
+plot!(ylim=(0, 320), xticks=[1,2,3], xlabel="Iteration", ylabel="Height [μm]", grid=false)
 annotate!(1.15, 300, "C")
-
+##
 total_nr, total_r = maximum(nr_heights, dims=1), sum(r_heights, dims=1)
 #=
 bar!([mean(total_nr), mean(total_r)], yerror=[std(total_nr), std(total_r)], label=false,
@@ -102,29 +85,30 @@ annotate!(1, 15, text("295.4 μm", 6, "courier", :left, rotation=90, color=:blac
 annotate!(2, 15, text("462.1 μm", 6, "courier", :left, rotation=90, color=:black))
 
 # Old plot, with derivations ignoring consumption.
-p5 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:gray, linewidth=3, label="Concentration", size=(400, 400), xlim=(0,2))
-plot!(x, sol_ana ./ maximum(sol_ana), color=ColorSchemes.okabe_ito[1], linewidth=3, label="Cumulative", xlim=(0,2))
-plot!(x, sol_dis ./ maximum(sol_dis), color=ColorSchemes.okabe_ito[1],  linewidth=3,linestyle=:dash,label="Approximation")
-vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, )
-xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200), yticks=[])
-annotate!(0.12, 0.96, "E")
+#p5 = plot(x, myc, xlabel="Distance from interface", grid=false, color=:gray, linewidth=3, label="Concentration", size=(400, 400), xlim=(0,2))
+#plot!(x, sol_ana ./ maximum(sol_ana), color=ColorSchemes.okabe_ito[1], linewidth=3, label="Cumulative", xlim=(0,2))
+#plot!(x, sol_dis ./ maximum(sol_dis), color=ColorSchemes.okabe_ito[1],  linewidth=3,linestyle=:dash,label="Approximation")
+#vline!([sqrt(D*dt)], color=:black, alpha=0.6, linewidth=1.5, style=:dash, legend=:right, label=false, )
+#xticks!([0.5, 1.0, 2.0, 3.0]*sqrt(D*dt), ["0.5L", "L", "2L", "3L"], ylabel="Lim. nutrient (a.u.)", size=(400, 200), yticks=[])
+#annotate!(0.12, 0.96, "E")
 ##
 df = DataFrame(CSV.File("data/sims/monod_diffusion.csv"))
-p5 = @df df plot(:X, :Concentration, color=:gray,linestyle=:dash, linewidth=2.5,
+p5 = @df df plot(:X, :Concentration, color=:gray,linestyle=:dash, linewidth=2,
                  label="Concentration")
 @df df plot!(:X, :Monod, color=:gray, linewidth=2.5, label="Monod")
-@df df plot!(:X, :Sum_growth, color=ColorSchemes.okabe_ito[1], linewidth=2.5, 
+@df df plot!(:X, :Sum_growth, color=ColorSchemes.okabe_ito[1], linewidth=2, 
              label="Total Growth")
 @df df plot!(:X, :Approximation, color=ColorSchemes.okabe_ito[1], 
-             linewidth=2.5, linestyle=:dash, label="Approximation")
-plot!(xticks=([0, 10, 20, 30, 40, 50], ["0L", "L", "2L", "3L", "4L", "5L"]), 
-      xlim=(0, 20), grid=false, legend=:right, xlabel="Distance from interface",
+             linewidth=2, linestyle=:dash, label="Approximation")
+plot!(xticks=([0, 28.26, 28.26*2, 28.26*3], ["0L", "L", "2L", "3L"]), 
+      xlim=(0, 60), grid=false, legend=:right, xlabel="Distance from interface",
       ylabel="Normalized value")
 ##
 l = @layout [[a{0.6h}
               b{0.7w} c{0.3w}] [d{0.6h}
                         e{0.4h}]]
 plot(p1, p3, p4, p2, p5, layout=l, size=(700, 450), dpi=300)
+##
 savefig("figs/fig2/fig2_monod.svg")
 ##
 nr_bounds = npzread("data/timelapses/columns/bounds_A.npy")

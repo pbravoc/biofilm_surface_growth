@@ -55,22 +55,14 @@ function approx_func(x, L)
 end
 
 # oxygen parameters
-D = 2500                    # μm^2 /s
-k_s = 1.6e3                 # μmol / (s* cell)
-ρ = 1.0                     # cells / ml 
-λ = k_s * ρ                 # μM / s
-c_half = 1.0                # μM
-c_outside= 250.0            # μM
-
-## 'nutrient' parameters 
-D = 800
-λ = 1.3e3
-c_half = 38 
-c_outside = 100.0
-L = sqrt(D*c_half / (λ*ρ))
+D = 25.0                    # μm^2 /s
+λ = 1.1e2                 # μM / s
+k = 1.0                # μM
+c_0= 250.0            # μM
+dimensionless = sqrt(D*k / λ)
+dimensionless2 = sqrt(c_0*D*k / λ)
 ##
-my_sol = diffusion_monod(60.0, 1e5, D, λ, c_half, c_outside)
-##
+my_sol = diffusion_monod(30.0, 1e5, D, λ, k, c_0)
 sum_growth = [integrate(my_sol[1][1:i], my_sol[3][1:i]) for i=1:length(my_sol[1])]
 f(L) = sqrt(mean((sum_growth./maximum(sum_growth) .- approx_func.(my_sol[1], L[1])).^2))
 L_best = Optim.minimizer(Optim.optimize(f, [0.0], [100.0], [30.0]))[1]
@@ -86,12 +78,55 @@ df = DataFrame("X"=>my_sol[1], "Concentration"=>my_sol[2]./maximum(my_sol[2]),
              label="Total Growth")
 @df df plot!(:X, :Approximation, color=ColorSchemes.okabe_ito[1], 
              linewidth=2.5, linestyle=:dash, label="Approximation")
-plot!(xticks=([0.5*L_best, L_best, 1.5*L_best, 2*L_best], ["0.5L", "L", "1.5L", "2L"]))
+vline!([dimensionless2], color=:red, linewidth=2)
+#plot!(xticks=([0.5*L_best, L_best, 1.5*L_best, 2*L_best], ["0.5L", "L", "1.5L", "2L"]))
 plot!( grid=false, legend=:right, xlabel="Distance from interface",
       ylabel="Normalized value")
 ##
 #CSV.write("data/sims/monod_diffusion.csv", df)
 #@df df plot(:X, :Approximation - :Sum_growth)
-
+## Behavior over different c halves 
+D = 800
+λ = 1.3e3
+c_outside = 100.0
+L = sqrt(D*c_half / (λ*ρ))
+c_half_list = Array(5:5:100)
+L_list = zeros(length(c_half_list))
+error_list = zeros(length(c_half_list))
+SG_list = []
+MONOD_list = []
+for i in 1:length(c_half_list)
+    my_sol = diffusion_monod(60.0, 1e5, D, λ, c_half_list[i], c_outside)
+    sum_growth = [integrate(my_sol[1][1:i], my_sol[3][1:i]) for i=1:length(my_sol[1])]
+    res = Optim.optimize(f, [0.0], [100.0], [30.0])
+    L_list[i] = res.minimizer[1]
+    error_list[i] = res.minimum
+    append!(SG_list, [sum_growth ./ maximum(sum_growth)])
+    append!(MONOD_list, [my_sol[3]/maximum(my_sol[3])])
+end
 ##
+res = Optim.optimize(f, [0.0], [100.0], [30.0])
+##
+p1 = plot(c_half_list, error_list, ylim=(0, 0.06), legend=false, c=:black)
+plot!(xlabel="Monod Constant [μM]", ylabel="RMSE", right_margin=13mm,
+      xticks=[10, 30, 50, 70, 90])
+##
+p2 = plot(my_sol[1], MONOD_list, line_z = transpose(c_half_list), legend=false, colorbar=true,
+          c=:viridis, xlim=(0,40), xlabel="X [μm]", ylabel="Growth", colorbartitle="Monod c.")
+p3 = plot(my_sol[1], SG_list, line_z = transpose(c_half_list), legend=false, colorbar=true,
+          c=:viridis, xlim=(0,40), xlabel="X [μm]", ylabel="Total Growth", colorbartitle="Monod c.")
+##
+l = @layout([a{0.4w} b{0.4w} c{0.2w}])
+plot(p2, p3, p1, layout=l, size=(700, 150), grid=false, dpi=500, bottom_margin=5mm, left_margin=3mm)
+savefig("figs/monod_constant_approximation.svg")
 
+## Phase spaces
+D = 1e3                    # μm^2 /s
+λ = 1e1                 # μM / s
+k = 1.0                # μM
+c_0 = 1.0                # μM
+L = D*k/λ
+print(L)
+##
+my_sol = diffusion_monod(100.0, 1e5, D, λ, k, c_0)
+plot(my_sol[1], my_sol[2], ylim=(0.0, 1.0))
