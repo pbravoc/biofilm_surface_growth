@@ -119,14 +119,3 @@ p3 = plot(my_sol[1], SG_list, line_z = transpose(c_half_list), legend=false, col
 l = @layout([a{0.4w} b{0.4w} c{0.2w}])
 plot(p2, p3, p1, layout=l, size=(700, 150), grid=false, dpi=500, bottom_margin=5mm, left_margin=3mm)
 savefig("figs/monod_constant_approximation.svg")
-
-## Phase spaces
-D = 1e3                    # μm^2 /s
-λ = 1e1                 # μM / s
-k = 1.0                # μM
-c_0 = 1.0                # μM
-L = D*k/λ
-print(L)
-##
-my_sol = diffusion_monod(100.0, 1e5, D, λ, k, c_0)
-plot(my_sol[1], my_sol[2], ylim=(0.0, 1.0))
